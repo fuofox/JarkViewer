@@ -815,7 +815,7 @@ cv::Mat ImageDatabase::readDibFromMemory(const uint8_t* data, size_t size) {
                 uint8_t r = pixelData[byteIndex];
                 uint8_t g = pixelData[byteIndex + 1];
                 uint8_t b = pixelData[byteIndex + 2];
-                image.at<cv::Vec4b>(y, x) = cv::Vec4b(b, g, r, 255);
+                image.at<cv::Vec4b>(y, x) = cv::Vec4b(r, g, b, 255);
             }
         }
         break;
