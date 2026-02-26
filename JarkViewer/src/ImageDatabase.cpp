@@ -2209,7 +2209,7 @@ static size_t getVideoSize(string_view exifStr) {
     size_t valueEnd = valueStart;
     while ('0' <= exifStr[valueEnd] && exifStr[valueEnd] <= '9') valueEnd++;
 
-    if (valueEnd <= valueStart || valueEnd >= exifStr.length()) {
+    if (valueEnd <= valueStart || valueEnd > exifStr.length()) {
         return 0;
     }
 
