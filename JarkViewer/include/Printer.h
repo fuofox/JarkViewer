@@ -84,7 +84,7 @@ public:
     static inline volatile bool isWorking = false;
     static inline volatile HWND hwnd = nullptr;
 
-    Printer(cv::Mat image) {
+    Printer(const cv::Mat& image) {
         requestExitFlag = false;
         isWorking = true;
 

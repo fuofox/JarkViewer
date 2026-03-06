@@ -1644,9 +1644,26 @@ public:
                 else
                     srcImg = curPar.imageAssetPtr->frames[curPar.curFrameIdx];
 
-                std::thread printerThread([](cv::Mat image) {
-                    Printer printer(image);
-                    }, srcImg);
+                std::thread printerThread([](cv::Mat image, int rotation) {
+                    cv::Mat rotatedImage;
+
+                    switch (rotation) {
+                    case 1:
+                        cv::rotate(image, rotatedImage, cv::ROTATE_90_COUNTERCLOCKWISE);
+                        break;
+                    case 2:
+                        cv::rotate(image, rotatedImage, cv::ROTATE_180);
+                        break;
+                    case 3:
+                        cv::rotate(image, rotatedImage, cv::ROTATE_90_CLOCKWISE);
+                        break;
+                    default:
+                        rotatedImage = image;
+                        break;
+                    }
+
+                    Printer printer(rotatedImage);
+                    }, srcImg, curPar.rotation);
                 printerThread.detach();
             }
             return;
