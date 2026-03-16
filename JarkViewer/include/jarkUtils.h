@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <ranges>
 #include <span>
+#include <print>
 
 using std::vector;
 using std::string;
@@ -27,9 +28,6 @@ using std::set;
 using std::map;
 using std::unordered_set;
 using std::unordered_map;
-using std::cout;
-using std::cerr;
-using std::endl;
 
 #include "framework.h"
 #include "resource.h"
@@ -452,8 +450,8 @@ public:
 #ifndef NDEBUG
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::current_zone()->to_local(now);
-        auto str = std::format("[{:%H:%M:%S}] {}\n", time, std::vformat(fmt, std::make_format_args(args...)));
-        std::cout << str;
+        auto str = std::format("[{:%H:%M:%S}] {}", time, std::vformat(fmt, std::make_format_args(args...)));
+        std::println("{}", str);
 #endif
     }
 
@@ -462,8 +460,8 @@ public:
 #ifndef NDEBUG
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::current_zone()->to_local(now);
-        auto str = std::format(L"[{:%H:%M:%S}] {}\n", time, std::vformat(fmt, std::make_wformat_args(args...)));
-        std::cout << jarkUtils::wstringToUtf8(str);
+        auto wstr = std::format(L"[{:%H:%M:%S}] {}", time, std::vformat(fmt, std::make_wformat_args(args...)));
+        std::println("{}", jarkUtils::wstringToUtf8(wstr));
 #endif
     }
 

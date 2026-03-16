@@ -1393,7 +1393,7 @@ public:
 
         const int frame_width = nextmainCanvas.cols;
         const int frame_height = nextmainCanvas.rows;
-        for (int x = frame_width; x > 0; x -= ((frame_width * 1.5 - x) / 8)) {
+        for (int x = frame_width; x > 0; x -= (int)((frame_width * 1.5 - x) / 8)) {
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(x, 0, frame_width, frame_height));
@@ -1435,7 +1435,7 @@ public:
 
         const int frame_width = nextmainCanvas.cols;
         const int frame_height = nextmainCanvas.rows;
-        for (int x = 0; x <= frame_width; x += ((frame_width*1.5 - x) / 8)) {
+        for (int x = 0; x <= frame_width; x += (int)((frame_width*1.5 - x) / 8)) {
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(x, 0, frame_width, frame_height));
@@ -1477,7 +1477,7 @@ public:
 
         const int frame_width = nextmainCanvas.cols;
         const int frame_height = nextmainCanvas.rows;
-        for (int y = frame_height; y >= 0; y -= ((frame_height * 1.5 - y) / 8)) {
+        for (int y = frame_height; y >= 0; y -= (int)((frame_height * 1.5 - y) / 8)) {
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(0, y, frame_width, frame_height));
@@ -1519,7 +1519,7 @@ public:
 
         const int frame_width = nextmainCanvas.cols;
         const int frame_height = nextmainCanvas.rows;
-        for (int y = 0; y <= frame_height; y += ((frame_height * 1.5 - y) / 8)) {
+        for (int y = 0; y <= frame_height; y += (int)((frame_height * 1.5 - y) / 8)) {
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(0, y, frame_width, frame_height));
@@ -1872,7 +1872,7 @@ public:
                 curPar.width : curPar.height) * curPar.zoomTarget / 2 / curPar.ZOOM_BASE;
             newTargetX = std::clamp(newTargetX, -newTargetXMax, newTargetXMax);
 
-            const int newTargetYMax = ((curPar.rotation == 0 or curPar.rotation == 2) ? 
+            const int newTargetYMax = ((curPar.rotation == 0 or curPar.rotation == 2) ?
                 curPar.height : curPar.width) * curPar.zoomTarget / 2 / curPar.ZOOM_BASE;
             newTargetY = std::clamp(newTargetY, -newTargetYMax, newTargetYMax);
 

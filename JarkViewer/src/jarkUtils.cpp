@@ -711,9 +711,29 @@ void jarkUtils::activateWindow(HWND hwnd) {
 
 // 获取当前程序的完整路径
 std::wstring jarkUtils::getCurrentAppPath() {
-    wchar_t path[MAX_PATH] = { 0 };
-    GetModuleFileNameW(nullptr, path, MAX_PATH);
-    return std::wstring(path);
+    std::wstring path;
+    int bufferSize = MAX_PATH;
+
+    // 避免极端情况下死循环
+    while (bufferSize <= 32768) {
+        path.resize(bufferSize);
+        DWORD readLen = GetModuleFileNameW(nullptr, path.data(), static_cast<DWORD>(path.size()));
+        if (readLen == 0) {
+            return L"";
+        }
+
+        // 实际路径长度可能更长
+        if (readLen >= path.size()) {
+            bufferSize *= 2;
+            continue;
+        }
+
+        // 调整到实际长度
+        path.resize(readLen);
+        return path;
+    }
+
+    return L"";
 }
 
 // 调用 Windows Explorer 来打开文件所在的文件夹并选中该文件
@@ -722,7 +742,7 @@ void jarkUtils::openFileLocation(wstring_view filePath) {
 
     std::error_code ec;
     if (!fs::exists(filePath, ec) || ec) {
-        JARK_LOG("File not found: {}", filePath);
+        JARK_LOG(L"File not found: {}", filePath);
         return;
     }
 
