@@ -718,18 +718,40 @@ std::wstring jarkUtils::getCurrentAppPath() {
 
 // 调用 Windows Explorer 来打开文件所在的文件夹并选中该文件
 void jarkUtils::openFileLocation(wstring_view filePath) {
-    if (!std::filesystem::exists(filePath)) {
+    namespace fs = std::filesystem;
+
+    std::error_code ec;
+    if (!fs::exists(filePath, ec) || ec) {
+        JARK_LOG("File not found: {}", filePath);
         return;
     }
 
-    ShellExecuteW(
-        nullptr,
-        L"open",
-        L"explorer.exe",
-        std::format(L"/select,\"{}\"", filePath).c_str(),
-        nullptr,
-        SW_SHOWNORMAL
-    );
+    fs::path absPath = fs::absolute(filePath, ec);
+    if (ec) {
+        CoUninitialize();
+        JARK_LOG("Failed to get absolute path: {}", ec.message());
+        return;
+    }
+
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    if (FAILED(hr)) {
+        JARK_LOG("CoInitializeEx failed: 0x{:X}", hr);
+        return;
+    }
+
+    auto pidl = ILCreateFromPathW(absPath.wstring().c_str());
+    if (!pidl) {
+        CoUninitialize();
+        JARK_LOG("Get pidl failed.");
+        return;
+    }
+
+    SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+
+    ILFree(pidl);
+    CoUninitialize();
+
+    return;
 }
 
 void jarkUtils::openFileProperties(wstring_view filePath) {
