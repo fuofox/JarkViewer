@@ -73,10 +73,7 @@ scoop install extras/jarkviewer
 
 ## ⚠ 最低系统支持
 
-1. 仅支持 `64位` 的 `Windows 10` 及以上操作系统。
-1. CPU必须支持 `AVX2` 指令集：
-	1. Intel 4代(Haswell)及后续CPU（2013年起）。
-	1. AMD Ryzen系列及后续CPU（2017年起）。
+仅支持 `64位` 的 `Windows 10/11` 操作系统。
 
 ---
 
@@ -93,9 +90,9 @@ git clone git@github.com:jark006/JarkViewer.git --depth=1
 
 静态库下载： [https://github.com/jark006/JarkViewer/releases/tag/static_lib](https://github.com/jark006/JarkViewer/releases/tag/static_lib)
 
-以上静态库除 `OpenCV` 外，均使用vcpkg安装的静态库复制而来。OpenCV静态库的编译指令集基准为AVX2，即只支持`Intel 4代` / `AMD Ryzen系列` 及后续CPU，有以下几个主要修改：
-1. 在源码 `opencv-4.12.0\modules\imgcodecs\src\loadsave.cpp` #68-79 移除图像分辨率限制。
-1. 在源码 `opencv-4.12.0\modules\highgui\src\window_w32.cpp` #337 将 `IDC_CROSS` 改为 `IDC_ARROW`，即在 `cv::imshow()` 窗口内不使用十字光标。
+以上静态库除 `OpenCV` 外，均使用vcpkg安装的静态库复制而来。OpenCV有以下2个修改：
+1. 在源码 `opencv-4.13.0\modules\imgcodecs\src\loadsave.cpp` #68-79 移除图像分辨率限制。
+1. 在源码 `opencv-4.13.0\modules\highgui\src\window_w32.cpp` #337 将 `IDC_CROSS` 改为 `IDC_ARROW`，即在 `cv::imshow()` 窗口内不使用十字光标。
 
 
 若不要以上静态库，可在项目属性页开启`vcpkg`支持，然后手动安装第三方库 (后续若有新增，此列表可能更新不及时，需开发者自行根据编译缺失信息补充安装)

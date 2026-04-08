@@ -73,10 +73,7 @@ scoop install extras/jarkviewer
 
 ## ⚠ Minimum System Support
 
-1. Only `64-bit` `Windows 10` or later are supported.
-2. The CPU must support the `AVX2` instruction set:
-	1. Intel 4th generation (Haswell) and later CPUs (since 2013).
-	2. AMD Ryzen series and later CPUs (since 2017).
+Only `64-bit` `Windows 10/11` are supported.
 
 ---
 
@@ -93,9 +90,9 @@ This project is developed using `Visual Studio 2026`, with all third-party libra
 
 Static Library Download: [https://github.com/jark006/JarkViewer/releases/tag/static_lib](https://github.com/jark006/JarkViewer/releases/tag/static_lib)
 
-With the exception of `OpenCV`, the static libraries above were copied from libraries installed via vcpkg. The OpenCV static library compilation baseline instruction set is AVX2, meaning it only supports `Intel 4th generation` / `AMD Ryzen series` and later CPUs. The following main modifications were made:
-1.  In source file `opencv-4.12.0\modules\imgcodecs\src\loadsave.cpp` lines #68-79, removed the image resolution limit.
-2.  In source file `opencv-4.12.0\modules\highgui\src\window_w32.cpp` line #337, changed `IDC_CROSS` to `IDC_ARROW`, i.e., not using a crosshair cursor inside `cv::imshow()` windows.
+With the exception of `OpenCV`, the static libraries above were copied from libraries installed via vcpkg. The following 2 modifications were made to OpenCV:
+1.  In source file `opencv-4.13.0\modules\imgcodecs\src\loadsave.cpp` lines #68-79, removed the image resolution limit.
+2.  In source file `opencv-4.13.0\modules\highgui\src\window_w32.cpp` line #337, changed `IDC_CROSS` to `IDC_ARROW`, i.e., not using a crosshair cursor inside `cv::imshow()` windows.
 
 If you prefer not to use the above static libraries, you can enable `vcpkg` support in the project properties and manually install the third-party libraries. (This list may not be updated promptly if new dependencies are added later; developers may need to install additional packages based on compilation error messages.)
 

@@ -6,7 +6,7 @@ constexpr uint32_t STRING_MAX_NUM = 1024;
 // 界面字符串表，暂时仅支持中文和英文
 // 条目所在行号减10即为 stringID
 // 因为使用索引是硬编码，所以不要随意在中间增减条目，会打乱索引，只能在后面追加条目
-const char* const UIStringTable[STRING_MAX_NUM][2] = {
+std::string_view UIStringTable[STRING_MAX_NUM][2] = {
     {"NULL", "NULL"},
     {"设置", "Settings"},
     {"常规", "General"},
@@ -70,7 +70,7 @@ const char* const UIStringTable[STRING_MAX_NUM][2] = {
 };
 
 
-const wchar_t* const UIStringTableW[STRING_MAX_NUM][2] = {
+std::wstring_view UIStringTableW[STRING_MAX_NUM][2] = {
     {L"NULL", L"NULL"},
     {L"JarkViewer看图", L"JarkViewer"},
     {L"文件关联设置成功！", L"Association successful!"},
@@ -121,11 +121,11 @@ const wchar_t* const UIStringTableW[STRING_MAX_NUM][2] = {
 const char* const getUIString(const uint32_t stringidx) {
     if (stringidx >= STRING_MAX_NUM)
         return "NULL";
-    return UIStringTable[stringidx][GlobalVar::settingParameter.UI_LANG];
+    return UIStringTable[stringidx][GlobalVar::settingParameter.UI_LANG].data();
 }
 
 const wchar_t* const getUIStringW(const uint32_t stringidx) {
     if (stringidx >= STRING_MAX_NUM)
         return L"NULL";
-    return UIStringTableW[stringidx][GlobalVar::settingParameter.UI_LANG];
+    return UIStringTableW[stringidx][GlobalVar::settingParameter.UI_LANG].data();
 }

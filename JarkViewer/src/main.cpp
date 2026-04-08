@@ -599,6 +599,7 @@ public:
     void OnMouseLeave() override {
         cursorPosLast = cursorPos = CursorPos::centerArea;
         extraUIFlag = ShowExtraUI::none;
+        mouseIsPressing = false;
         operateQueue.push({ ActionENUM::normalFresh });
     }
 

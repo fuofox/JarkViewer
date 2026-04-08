@@ -1,5 +1,6 @@
 .vs
 .vscode
+.omx
 build
 x64
 /JarkViewer/JarkViewer.aps
