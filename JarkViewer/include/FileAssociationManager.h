@@ -1,4 +1,5 @@
 #pragma once
+#include "FileAssociationNaming.h"
 #include "jarkUtils.h"
 #include <shlwapi.h>
 #include <shlobj.h>
@@ -9,8 +10,7 @@
 class FileAssociationManager {
 private:
     std::wstring m_appPath;
-    std::wstring m_appName;
-    std::wstring m_progId;
+    std::wstring m_legacyProgId;
 
     // 设置注册表值
     bool SetRegistryValue(HKEY hKey, const std::wstring& subKey, const std::wstring& valueName, const std::wstring& value) {
@@ -35,7 +35,8 @@ private:
 
     // 删除注册表键
     bool DeleteRegistryKey(HKEY hKey, const std::wstring& subKey) {
-        return RegDeleteKeyW(hKey, subKey.c_str()) == ERROR_SUCCESS;
+        const auto result = SHDeleteKeyW(hKey, subKey.c_str());
+        return result == ERROR_SUCCESS || result == ERROR_FILE_NOT_FOUND || result == ERROR_PATH_NOT_FOUND;
     }
 
     // 删除注册表值
@@ -44,51 +45,54 @@ private:
         LONG result = RegOpenKeyExW(hKey, subKey.c_str(), 0, KEY_WRITE, &hSubKey);
 
         if (result != ERROR_SUCCESS) {
-            return false;
+            return result == ERROR_FILE_NOT_FOUND || result == ERROR_PATH_NOT_FOUND;
         }
 
         result = RegDeleteValueW(hSubKey, valueName.c_str());
         RegCloseKey(hSubKey);
 
-        return result == ERROR_SUCCESS;
+        return result == ERROR_SUCCESS || result == ERROR_FILE_NOT_FOUND;
     }
 
-    // 检查是否已经关联到当前程序
-    bool IsAssociatedWithCurrentApp(const std::wstring& extension) {
-        // 检查类关联
-        std::wstring extKey = L"Software\\Classes\\." + extension;
+    std::wstring GetExpectedProgId(const std::wstring& extension) const {
+        return FileAssociationNaming::BuildProgId(extension);
+    }
+
+    std::wstring GetAssociatedProgId(const std::wstring& extension) {
+        const std::wstring extKey = FileAssociationNaming::BuildExtensionKey(extension);
 
         HKEY hKey;
         LONG result = RegOpenKeyExW(HKEY_CURRENT_USER, extKey.c_str(), 0, KEY_READ, &hKey);
-
         if (result != ERROR_SUCCESS) {
-            return false;
+            return {};
         }
 
-        wchar_t progId[256];
+        wchar_t progId[256]{};
         DWORD bufferSize = sizeof(progId);
         result = RegQueryValueExW(hKey, L"", nullptr, nullptr,
             reinterpret_cast<LPBYTE>(progId), &bufferSize);
 
         RegCloseKey(hKey);
+        return result == ERROR_SUCCESS ? std::wstring(progId) : std::wstring{};
+    }
 
-        if (result == ERROR_SUCCESS) {
-            return std::wstring(progId) == m_progId;
-        }
+    bool IsManagedProgId(const std::wstring& progId, const std::wstring& extension) const {
+        return progId == GetExpectedProgId(extension) || progId == m_legacyProgId;
+    }
 
-        return false;
+    // 检查是否已经关联到当前程序
+    bool IsAssociatedWithCurrentApp(const std::wstring& extension) {
+        return IsManagedProgId(GetAssociatedProgId(extension), extension);
     }
 
     // 注册程序ID（不设置图标，保持系统缩略图功能）
-    bool RegisterProgId() {
-        std::wstring progIdKey = L"Software\\Classes\\" + m_progId;
+    bool RegisterProgId(const std::wstring& extension) {
+        const std::wstring progIdKey = FileAssociationNaming::BuildProgIdKey(extension);
 
         // 设置程序描述
-        if (!SetRegistryValue(HKEY_CURRENT_USER, progIdKey, L"", m_appName + L" Image File")) {
+        if (!SetRegistryValue(HKEY_CURRENT_USER, progIdKey, L"", FileAssociationNaming::BuildTypeName(extension))) {
             return false;
         }
-
-        // 不设置 DefaultIcon，让系统保持原有的缩略图显示功能
 
         // 设置打开命令
         std::wstring commandKey = progIdKey + L"\\shell\\open\\command";
@@ -102,31 +106,55 @@ private:
 
     // 关联文件扩展名
     bool AssociateExtension(const std::wstring& extension) {
-        std::wstring extKey = L"Software\\Classes\\." + extension;
+        const std::wstring progId = GetExpectedProgId(extension);
+        const std::wstring extKey = FileAssociationNaming::BuildExtensionKey(extension);
 
-        // 设置文件类型关联
-        if (!SetRegistryValue(HKEY_CURRENT_USER, extKey, L"", m_progId)) {
+        if (!RegisterProgId(extension)) {
             return false;
         }
 
-        // 不再设置 UserChoice，因为它受到系统保护
-        // Windows 会根据用户的实际选择来更新 UserChoice
+        // 设置文件类型关联
+        if (!SetRegistryValue(HKEY_CURRENT_USER, extKey, L"", progId)) {
+            return false;
+        }
 
         return true;
     }
 
     // 取消关联文件扩展名
     bool UnassociateExtension(const std::wstring& extension) {
+        const std::wstring associatedProgId = GetAssociatedProgId(extension);
+
         // 检查是否关联到当前程序
-        if (!IsAssociatedWithCurrentApp(extension)) {
+        if (!IsManagedProgId(associatedProgId, extension)) {
             return true; // 如果没有关联到当前程序，直接返回成功
         }
 
         // 删除类关联
-        std::wstring extKey = L"Software\\Classes\\." + extension;
+        const std::wstring extKey = FileAssociationNaming::BuildExtensionKey(extension);
+        const std::wstring progIdKey = FileAssociationNaming::BuildProgIdKey(extension);
         DeleteRegistryValue(HKEY_CURRENT_USER, extKey, L"");
+        DeleteRegistryKey(HKEY_CURRENT_USER, progIdKey);
 
         return true;
+    }
+
+    void CleanupLegacyProgIdIfUnused(const std::vector<std::wstring>& extChecked,
+        const std::vector<std::wstring>& extUnchecked) {
+
+        for (const auto& ext : extChecked) {
+            if (GetAssociatedProgId(ext) == m_legacyProgId) {
+                return;
+            }
+        }
+
+        for (const auto& ext : extUnchecked) {
+            if (GetAssociatedProgId(ext) == m_legacyProgId) {
+                return;
+            }
+        }
+
+        DeleteRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\" + m_legacyProgId);
     }
 
     // 通知系统文件关联已更改
@@ -137,18 +165,12 @@ private:
 public:
     FileAssociationManager() {
         m_appPath = jarkUtils::getCurrentAppPath();
-        m_appName = L"JarkViewer";
-        m_progId = L"JarkViewer.ImageFile";
+        m_legacyProgId = L"JarkViewer.ImageFile";
     }
 
     // 管理文件关联的主函数
     bool ManageFileAssociations(const std::vector<std::wstring>& extChecked,
         const std::vector<std::wstring>& extUnchecked) {
-
-        // 首先注册程序ID
-        if (!RegisterProgId()) {
-            return false;
-        }
 
         bool allSucceeded = true;
 
@@ -166,20 +188,12 @@ public:
             }
         }
 
+        CleanupLegacyProgIdIfUnused(extChecked, extUnchecked);
+
         // 通知系统更改
         NotifySystemChange();
 
         return allSucceeded;
-    }
-
-    // 检查扩展名是否已关联到当前程序
-    bool IsExtensionAssociated(const std::wstring& extension) {
-        return IsAssociatedWithCurrentApp(extension);
-    }
-
-    // 获取当前程序路径
-    std::wstring GetAppPath() const {
-        return m_appPath;
     }
 };
 

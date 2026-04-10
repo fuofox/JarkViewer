@@ -282,6 +282,9 @@
     <ClInclude Include="include\Setting.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\FileAssociationNaming.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\FileAssociationManager.h">
       <Filter>include</Filter>
     </ClInclude>

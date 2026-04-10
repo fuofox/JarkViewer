@@ -161,6 +161,7 @@
     <ClInclude Include="include\channel.h" />
     <ClInclude Include="include\D2D1App.h" />
     <ClInclude Include="include\exifParse.h" />
+    <ClInclude Include="include\FileAssociationNaming.h" />
     <ClInclude Include="include\FileAssociationManager.h" />
     <ClInclude Include="include\ImageDatabase.h" />
     <ClInclude Include="include\libheif\heif.h" />
