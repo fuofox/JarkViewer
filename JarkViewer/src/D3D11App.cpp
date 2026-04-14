@@ -1,4 +1,4 @@
-#include "D2D1App.h"
+#include "D3D11App.h"
 
 namespace {
 
@@ -69,23 +69,16 @@ private:
 
 }
 
-D2D1App::D2D1App() {
+D3D11App::D3D11App() {
     loadSettings();
-    m_parameters.DirtyRectsCount = 0;
-    m_parameters.pDirtyRects = nullptr;
-    m_parameters.pScrollRect = nullptr;
-    m_parameters.pScrollOffset = nullptr;
 }
 
-D2D1App::~D2D1App() {
+D3D11App::~D3D11App() {
     this->DiscardDeviceResources();
-    SafeRelease(m_pD2DFactory);
-    SafeRelease(m_pWICFactory);
-    SafeRelease(m_pDWriteFactory);
 }
 
 template<class Interface>
-void D2D1App::SafeRelease(Interface*& pInterfaceToRelease) {
+void D3D11App::SafeRelease(Interface*& pInterfaceToRelease) {
     if (pInterfaceToRelease == nullptr)
         return;
 
@@ -93,7 +86,7 @@ void D2D1App::SafeRelease(Interface*& pInterfaceToRelease) {
     pInterfaceToRelease = nullptr;
 }
 
-void D2D1App::loadSettings() {
+void D3D11App::loadSettings() {
     auto exePath = jarkUtils::getCurrentAppPath();
     size_t lastSlash = exePath.find_last_of(L'\\');
     if (lastSlash == std::wstring::npos) {
@@ -149,10 +142,9 @@ void D2D1App::loadSettings() {
     }
 }
 
-void D2D1App::saveSettings() const {
+void D3D11App::saveSettings() const {
     WINDOWPLACEMENT wp{ .length = sizeof(WINDOWPLACEMENT) };
 
-    // 获取窗口的显示状态和位置信息
     if (GetWindowPlacement(m_hWnd, &wp) && wp.showCmd == SW_NORMAL) {
         GlobalVar::settingParameter.showCmd = SW_NORMAL;
         GlobalVar::settingParameter.rect = wp.rcNormalPosition;
@@ -171,34 +163,29 @@ void D2D1App::saveSettings() const {
     }
 }
 
-// 初始化
-HRESULT D2D1App::Initialize(HINSTANCE hInstance) {
+HRESULT D3D11App::Initialize(HINSTANCE hInstance) {
     HRESULT hr = E_FAIL;
-    //register window class
     WNDCLASSEX wcex = { sizeof(WNDCLASSEX) };
     wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = D2D1App::WndProc;
+    wcex.lpfnWndProc = D3D11App::WndProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = sizeof(void*);
     wcex.hInstance = hInstance;
     wcex.hCursor = LoadCursorW(nullptr, IDC_ARROW);
     wcex.hbrBackground = nullptr;
     wcex.lpszMenuName = nullptr;
-    wcex.lpszClassName = L"D2D1WndClass";
+    wcex.lpszClassName = L"D3D11WndClass";
     wcex.hIcon = nullptr;
-    // 注册窗口
     RegisterClassExW(&wcex);
 
     RECT window_rect = GlobalVar::settingParameter.showCmd == SW_NORMAL ? GlobalVar::settingParameter.rect : RECT{ 0, 0, 800, 600 };
     DWORD window_style = WS_OVERLAPPEDWINDOW;
-    m_hWnd = CreateWindowExW(0, L"D2D1WndClass", m_wndCaption.c_str(), window_style,
+    m_hWnd = CreateWindowExW(0, L"D3D11WndClass", m_wndCaption.c_str(), window_style,
         window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top,
         0, 0, hInstance, this);
     hr = m_hWnd ? S_OK : E_FAIL;
-    
-    // 显示窗口
+
     if (SUCCEEDED(hr)) {
-        CreateDeviceIndependentResources();
         CreateDeviceResources();
 
         DragAcceptFiles(m_hWnd, TRUE);
@@ -206,8 +193,9 @@ HRESULT D2D1App::Initialize(HINSTANCE hInstance) {
         GlobalVar::isSystemDarkMode = jarkUtils::getSystemDarkMode();
         GlobalVar::isCurrentUIDarkMode = GlobalVar::settingParameter.UI_Mode == 0 ? GlobalVar::isSystemDarkMode : (GlobalVar::settingParameter.UI_Mode == 2);
 
+        // DWMWA_USE_IMMERSIVE_DARK_MODE(20) 仅 Win10 1809+ 生效，Win7 上返回 E_INVALIDARG 但不影响运行
         BOOL themeMode = GlobalVar::isCurrentUIDarkMode;
-        DwmSetWindowAttribute(m_hWnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &themeMode, sizeof(BOOL));
+        DwmSetWindowAttribute(m_hWnd, 20, &themeMode, sizeof(BOOL));
 
         ShowWindow(m_hWnd, GlobalVar::settingParameter.showCmd == SW_NORMAL ? SW_NORMAL : SW_MAXIMIZE);
         UpdateWindow(m_hWnd);
@@ -215,221 +203,171 @@ HRESULT D2D1App::Initialize(HINSTANCE hInstance) {
     return hr;
 }
 
-HRESULT D2D1App::CreateDeviceIndependentResources() {
-    // 创建D2D工厂
-    HRESULT hr = D2D1CreateFactory(
-        D2D1_FACTORY_TYPE_SINGLE_THREADED,
-        __uuidof(ID2D1Factory1),
-        reinterpret_cast<void**>(&m_pD2DFactory));
-    // 创建 WIC 工厂.
-    if (SUCCEEDED(hr))
-    {
-        hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&m_pWICFactory));
-    }
-    // 创建 DirectWrite 工厂.
-    if (SUCCEEDED(hr))
-    {
-        hr = DWriteCreateFactory(
-            DWRITE_FACTORY_TYPE_SHARED,
-            __uuidof(m_pDWriteFactory),
-            reinterpret_cast<IUnknown **>(&m_pDWriteFactory));
-    }
-
-    return hr;
-}
-
-HRESULT D2D1App::CreateDeviceResources() {
-    // DXGI 工厂
-    IDXGIFactory2*						pDxgiFactory = nullptr;
-    // DXGI 设备
-    IDXGIDevice1*						pDxgiDevice = nullptr;
-
+HRESULT D3D11App::CreateDeviceResources() {
     HRESULT hr = S_OK;
 
-
-    // 创建 D3D11设备与设备上下文 
-    if (SUCCEEDED(hr))
-    {
-        // D3D11 创建flag 
-        // 一定要有D3D11_CREATE_DEVICE_BGRA_SUPPORT，否则创建D2D设备上下文会失败
-        UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+    // 创建 D3D11 设备
+    UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef _DEBUG
-        // Debug状态 有D3D DebugLayer就可以取消注释
-        creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+    creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
-        D3D_FEATURE_LEVEL featureLevels[] = {
-            D3D_FEATURE_LEVEL_11_1,
-            D3D_FEATURE_LEVEL_11_0,
-            D3D_FEATURE_LEVEL_10_1,
-            D3D_FEATURE_LEVEL_10_0,
-            D3D_FEATURE_LEVEL_9_3,
-            D3D_FEATURE_LEVEL_9_2,
-            D3D_FEATURE_LEVEL_9_1
-        };
-        // 创建设备
-        hr = D3D11CreateDevice(
-            nullptr,					// 设为空指针选择默认设备
-            D3D_DRIVER_TYPE_HARDWARE,	// 强行指定硬件渲染
-            nullptr,					// 强行指定WARP渲染 D3D_DRIVER_TYPE_WARP 没有软件接口
-            creationFlags,				// 创建flag
-            featureLevels,				// 欲使用的特性等级列表
-            ARRAYSIZE(featureLevels),	// 特性等级列表长度
-            D3D11_SDK_VERSION,			// SDK 版本
-            &m_pD3DDevice,				// 返回的D3D11设备指针
-            &m_featureLevel,			// 返回的特性等级
-            &m_pD3DDeviceContext);		// 返回的D3D11设备上下文指针
-    }
+    D3D_FEATURE_LEVEL featureLevels[] = {
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+        D3D_FEATURE_LEVEL_9_3,
+        D3D_FEATURE_LEVEL_9_2,
+        D3D_FEATURE_LEVEL_9_1
+    };
+    hr = D3D11CreateDevice(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        nullptr,
+        creationFlags,
+        featureLevels,
+        ARRAYSIZE(featureLevels),
+        D3D11_SDK_VERSION,
+        &m_pD3DDevice,
+        &m_featureLevel,
+        &m_pD3DDeviceContext);
 
-    // 创建 IDXGIDevice
+    // 获取 DXGI 工厂（通过设备链：Device → DXGIDevice → Adapter → Factory）
+    IDXGIDevice* pDxgiDevice = nullptr;
+    IDXGIAdapter* pDxgiAdapter = nullptr;
+    IDXGIFactory* pDxgiFactory = nullptr;
+
     if (SUCCEEDED(hr))
-        hr = m_pD3DDevice->QueryInterface(IID_PPV_ARGS(&pDxgiDevice));
-    // 创建D2D设备
+        hr = m_pD3DDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&pDxgiDevice);
     if (SUCCEEDED(hr))
-        hr = m_pD2DFactory->CreateDevice(pDxgiDevice, &m_pD2DDevice);
-    // 创建D2D设备上下文
+        hr = pDxgiDevice->GetAdapter(&pDxgiAdapter);
     if (SUCCEEDED(hr))
-        hr = m_pD2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pD2DDeviceContext);
+        hr = pDxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&pDxgiFactory);
 
-    SafeRelease(pDxgiDevice);
-    SafeRelease(pDxgiFactory);
+    // 创建交换链（Win7 兼容：使用 IDXGIFactory::CreateSwapChain + DXGI_SWAP_EFFECT_DISCARD）
+    if (SUCCEEDED(hr)) {
+        RECT rect = { 0 };
+        GetClientRect(m_hWnd, &rect);
 
-    CreateWindowSizeDependentResources();
-
-    return hr;
-}
-
-void D2D1App::CreateWindowSizeDependentResources() {
-    // DXGI 适配器
-    IDXGIAdapter*						pDxgiAdapter = nullptr;
-    // DXGI 工厂
-    IDXGIFactory2*						pDxgiFactory = nullptr;
-    // DXGI Surface 后台缓冲
-    IDXGISurface*						pDxgiBackBuffer = nullptr;
-    // DXGI 设备
-    IDXGIDevice1*						pDxgiDevice = nullptr;
-
-    HRESULT hr = S_OK;
-
-    // 清除之前窗口的呈现器相关设备
-    m_pD2DDeviceContext->SetTarget(nullptr);
-    SafeRelease(m_pD2DTargetBimtap);
-    m_pD3DDeviceContext->Flush();
-
-    RECT rect = { 0 }; GetClientRect(m_hWnd, &rect);
-
-    if (m_pSwapChain != nullptr)
-    {
-        // 如果交换链已经创建，则重设缓冲区
-        hr = m_pSwapChain->ResizeBuffers(
-            2, // Double-buffered swap chain.
-            lround(rect.right - rect.left),
-            lround(rect.bottom - rect.top),
-            DXGI_FORMAT_B8G8R8A8_UNORM,
-            0);
-
-        assert( hr == S_OK );
-    }
-    else
-    {
-        // 否则用已存在的D3D设备创建一个新的交换链
-        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-        swapChainDesc.Width = lround(rect.right - rect.left);
-        swapChainDesc.Height = lround(rect.bottom - rect.top);
-        swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        swapChainDesc.Stereo = false;
+        DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+        swapChainDesc.BufferDesc.Width = rect.right - rect.left;
+        swapChainDesc.BufferDesc.Height = rect.bottom - rect.top;
+        swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
+        swapChainDesc.BufferDesc.RefreshRate.Denominator = 0;
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swapChainDesc.BufferCount = 2;
-        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        swapChainDesc.BufferCount = 1;
+        swapChainDesc.OutputWindow = m_hWnd;
+        swapChainDesc.Windowed = TRUE;
+        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
         swapChainDesc.Flags = 0;
-        swapChainDesc.Scaling = DXGI_SCALING_NONE;
-        swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
-        // 获取 IDXGIDevice
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pD3DDevice->QueryInterface(IID_PPV_ARGS(&pDxgiDevice));
-        }
-        // 获取Dxgi适配器 可以获取该适配器信息
-        if (SUCCEEDED(hr))
-        {
-            hr = pDxgiDevice->GetAdapter(&pDxgiAdapter);
-        }
-        // 获取Dxgi工厂
-        if (SUCCEEDED(hr))
-        {
-            hr = pDxgiAdapter->GetParent(IID_PPV_ARGS(&pDxgiFactory));
-        }
-        // 创建交换链
-        if (SUCCEEDED(hr))
-        {
-            hr = pDxgiFactory->CreateSwapChainForHwnd(
-                m_pD3DDevice,
-                m_hWnd,
-                &swapChainDesc,
-                nullptr,
-                nullptr,
-                &m_pSwapChain);
-        }
-        // 确保DXGI队列里边不会超过一帧
-        if (SUCCEEDED(hr))
-        {
-            hr = pDxgiDevice->SetMaximumFrameLatency(1);
-        }
-    }
-
-    // 设置屏幕方向
-    if (SUCCEEDED(hr))
-    {
-        hr = m_pSwapChain->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
-    }
-    // 利用交换链获取Dxgi表面
-    if (SUCCEEDED(hr))
-    {
-        hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pDxgiBackBuffer));
-    }
-    // 利用Dxgi表面创建位图
-    if (SUCCEEDED(hr))
-    {
-        D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
-            D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-            D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
-            96.0f,
-            96.0f);
-        hr = m_pD2DDeviceContext->CreateBitmapFromDxgiSurface(
-            pDxgiBackBuffer,
-            &bitmapProperties,
-            &m_pD2DTargetBimtap);
-    }
-    // 设置
-    if (SUCCEEDED(hr))
-    {
-        // 设置 Direct2D 渲染目标
-        m_pD2DDeviceContext->SetTarget(m_pD2DTargetBimtap);
+        hr = pDxgiFactory->CreateSwapChain(m_pD3DDevice, &swapChainDesc, &m_pSwapChain);
     }
 
     SafeRelease(pDxgiDevice);
     SafeRelease(pDxgiAdapter);
     SafeRelease(pDxgiFactory);
-    SafeRelease(pDxgiBackBuffer);
+
+    if (SUCCEEDED(hr))
+        CreateWindowSizeDependentResources();
+
+    return hr;
 }
 
-// 丢弃设备相关资源
-void D2D1App::DiscardDeviceResources() {
-    SafeRelease(m_pD2DTargetBimtap);
+void D3D11App::CreateWindowSizeDependentResources() {
+    if (!m_pD3DDevice || !m_pSwapChain)
+        return;
+
+    // 释放旧暂存纹理
+    SafeRelease(m_pStagingTexture);
+    m_pD3DDeviceContext->Flush();
+
+    RECT rect = { 0 };
+    GetClientRect(m_hWnd, &rect);
+    UINT width = rect.right - rect.left;
+    UINT height = rect.bottom - rect.top;
+    if (width == 0 || height == 0)
+        return;
+
+    // 重设交换链缓冲区
+    HRESULT hr = m_pSwapChain->ResizeBuffers(
+        1,
+        width,
+        height,
+        DXGI_FORMAT_B8G8R8A8_UNORM,
+        0);
+    assert(hr == S_OK);
+
+    // 创建 CPU 可写暂存纹理
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width = width;
+    texDesc.Height = height;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.SampleDesc.Quality = 0;
+    texDesc.Usage = D3D11_USAGE_STAGING;
+    texDesc.BindFlags = 0;
+    texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    texDesc.MiscFlags = 0;
+
+    hr = m_pD3DDevice->CreateTexture2D(&texDesc, nullptr, &m_pStagingTexture);
+    assert(hr == S_OK);
+
+    m_stagingWidth = width;
+    m_stagingHeight = height;
+}
+
+void D3D11App::PresentCanvas(const uint8_t* data, int width, int height, int stride) {
+    if (!m_pStagingTexture || !m_pSwapChain || !m_pD3DDeviceContext)
+        return;
+
+    // 尺寸不匹配时重建
+    if ((UINT)width != m_stagingWidth || (UINT)height != m_stagingHeight)
+        CreateWindowSizeDependentResources();
+
+    // Map 暂存纹理，写入 CPU 画布数据
+    D3D11_MAPPED_SUBRESOURCE mapped = {};
+    HRESULT hr = m_pD3DDeviceContext->Map(m_pStagingTexture, 0, D3D11_MAP_WRITE, 0, &mapped);
+    if (SUCCEEDED(hr)) {
+        const int rowBytes = width * 4;
+        if ((int)mapped.RowPitch == stride) {
+            memcpy(mapped.pData, data, (size_t)rowBytes * height);
+        } else {
+            const uint8_t* src = data;
+            uint8_t* dst = (uint8_t*)mapped.pData;
+            for (int y = 0; y < height; y++) {
+                memcpy(dst, src, rowBytes);
+                src += stride;
+                dst += mapped.RowPitch;
+            }
+        }
+        m_pD3DDeviceContext->Unmap(m_pStagingTexture, 0);
+
+        // 将暂存纹理复制到交换链后缓冲
+        ID3D11Texture2D* pBackBuffer = nullptr;
+        hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&pBackBuffer);
+        if (SUCCEEDED(hr)) {
+            m_pD3DDeviceContext->CopyResource(pBackBuffer, m_pStagingTexture);
+            pBackBuffer->Release();
+        }
+    }
+
+    m_pSwapChain->Present(0, 0);
+}
+
+void D3D11App::DiscardDeviceResources() {
+    SafeRelease(m_pStagingTexture);
     SafeRelease(m_pSwapChain);
-    SafeRelease(m_pD2DDeviceContext);
-    SafeRelease(m_pD2DDevice);
     SafeRelease(m_pD3DDevice);
     SafeRelease(m_pD3DDeviceContext);
 }
 
-void D2D1App::Run() {
+void D3D11App::Run() {
     while (m_fRunning) {
         MSG msg;
         if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -442,35 +380,35 @@ void D2D1App::Run() {
     }
 }
 
-void D2D1App::OnDestroy() {
+void D3D11App::OnDestroy() {
     saveSettings();
     m_fRunning = FALSE;
 }
 
 
-LRESULT D2D1App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT D3D11App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_CREATE: {
         LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-        D2D1App* pD2DApp = (D2D1App*)pcs->lpCreateParams;
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)pD2DApp);
+        D3D11App* pApp = (D3D11App*)pcs->lpCreateParams;
+        SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)pApp);
         return TRUE;
     }
     case WM_GETMINMAXINFO: {
         MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-        mmi->ptMinTrackSize.x = 400; // 最小宽度
-        mmi->ptMinTrackSize.y = 300; // 最小高度
+        mmi->ptMinTrackSize.x = 400;
+        mmi->ptMinTrackSize.y = 300;
         return S_OK;
     }
     case WM_CONTEXTMENU: {
-        if (lParam == -1) { // 键盘触发的上下文菜单
+        if (lParam == -1) {
             RECT rc;
             GetClientRect(hwnd, &rc);
             int x = (rc.right - rc.left) / 2;
             int y = (rc.bottom - rc.top) / 2;
             ShowContextMenu(hwnd, x, y);
         }
-        else {  // 鼠标触发的上下文菜单
+        else {
             ShowContextMenu(hwnd, LOWORD(lParam), HIWORD(lParam));
         }
         return S_OK;
@@ -482,8 +420,8 @@ LRESULT D2D1App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
         .dwFlags = TME_LEAVE,
     };
 
-    D2D1App* pD2DApp = reinterpret_cast<D2D1App*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-    if (!pD2DApp)
+    D3D11App* pApp = reinterpret_cast<D3D11App*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+    if (!pApp)
         return DefWindowProcW(hwnd, message, wParam, lParam);
 
     switch (message)
@@ -492,14 +430,14 @@ LRESULT D2D1App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
     case WM_XBUTTONDOWN:
-        pD2DApp->OnMouseDown(message, LOWORD(lParam), HIWORD(lParam), wParam);
+        pApp->OnMouseDown(message, LOWORD(lParam), HIWORD(lParam), wParam);
         return S_OK;
 
     case WM_LBUTTONUP:
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
     case WM_XBUTTONUP:
-        pD2DApp->OnMouseUp(message, LOWORD(lParam), HIWORD(lParam), wParam);
+        pApp->OnMouseUp(message, LOWORD(lParam), HIWORD(lParam), wParam);
         return S_OK;
 
     case WM_MOUSEMOVE:
@@ -507,36 +445,36 @@ LRESULT D2D1App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
             tme.hwndTrack = hwnd;
             TrackMouseEvent(&tme);
         }
-        pD2DApp->OnMouseMove(message, LOWORD(lParam), HIWORD(lParam));
+        pApp->OnMouseMove(message, LOWORD(lParam), HIWORD(lParam));
         return S_OK;
 
     case WM_MOUSELEAVE:
         tme.hwndTrack = NULL;
-        pD2DApp->OnMouseLeave();
+        pApp->OnMouseLeave();
         break;
 
     case WM_MOUSEWHEEL:
-        pD2DApp->OnMouseWheel(LOWORD(wParam), HIWORD(wParam), LOWORD(lParam), HIWORD(lParam));
+        pApp->OnMouseWheel(LOWORD(wParam), HIWORD(wParam), LOWORD(lParam), HIWORD(lParam));
         return S_OK;
 
     case WM_KEYDOWN:
-        pD2DApp->OnKeyDown(wParam);
+        pApp->OnKeyDown(wParam);
         return S_OK;
 
     case WM_KEYUP:
-        pD2DApp->OnKeyUp(wParam);
+        pApp->OnKeyUp(wParam);
         return S_OK;
 
     case WM_DROPFILES:
-        pD2DApp->OnDropFiles(wParam);
+        pApp->OnDropFiles(wParam);
         break;
 
     case WM_COMMAND:
-        pD2DApp->OnContextMenuCommand(wParam);
+        pApp->OnContextMenuCommand(wParam);
         break;
 
     case WM_SIZE:
-        pD2DApp->OnResize(LOWORD(lParam), HIWORD(lParam));
+        pApp->OnResize(LOWORD(lParam), HIWORD(lParam));
         break;
 
     case WM_SETTINGCHANGE:
@@ -547,24 +485,19 @@ LRESULT D2D1App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 
     case WM_DESTROY:
     {
-        pD2DApp->OnRequestExitOtherWindows();
-        pD2DApp->OnDestroy();
+        pApp->OnRequestExitOtherWindows();
+        pApp->OnDestroy();
         PostQuitMessage(0);
         return S_OK;
     }
     break;
-
-    //default: {
-    //    JARK_LOG("{} message: 0x{:04x}", __FUNCTION__, (uint64_t)message);
-    //}break;
     }
 
     return DefWindowProcW(hwnd, message, wParam, lParam);
 }
 
 
-// 创建上下文菜单
-HMENU D2D1App::CreateContextMenu(HWND hwnd) {
+HMENU D3D11App::CreateContextMenu(HWND hwnd) {
     HMENU hMenu = CreatePopupMenu();
     MENUINFO mi = { sizeof(MENUINFO) };
     mi.fMask = MIM_STYLE | MIM_APPLYTOSUBMENUS;
@@ -597,8 +530,7 @@ HMENU D2D1App::CreateContextMenu(HWND hwnd) {
     return hMenu;
 }
 
-// 显示上下文菜单
-void D2D1App::ShowContextMenu(HWND hwnd, int x, int y) {
+void D3D11App::ShowContextMenu(HWND hwnd, int x, int y) {
     HMENU hMenu = CreateContextMenu(hwnd);
     POINT pt = { x, y };
     ClientToScreen(hwnd, &pt);

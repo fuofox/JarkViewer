@@ -2,7 +2,6 @@
 
 #include "jarkUtils.h"
 #include "TextDrawer.h"
-#include "D2D1App.h"
 
 // 全局变量存储UI状态
 struct PrintParams {

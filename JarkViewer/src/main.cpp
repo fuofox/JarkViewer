@@ -5,8 +5,7 @@
 #include "Printer.h"
 #include "Setting.h"
 
-#include "D2D1App.h"
-#include <wrl.h>
+#include "D3D11App.h"
 #include "omp.h"
 
 /* TODO
@@ -199,7 +198,7 @@ public:
     ~ExtraUIRes() {}
 };
 
-class JarkViewerApp : public D2D1App {
+class JarkViewerApp : public D3D11App {
 public:
     static constexpr int BG_GRID_WIDTH = 16;
     static inline bool isLowZoom = false;
@@ -223,15 +222,8 @@ public:
     int curFileIdx = -1;         // 文件在路径列表的索引
     vector<wstring> imgFileList; // 工作目录下所有图像文件路径
 
-    TextDrawer textDrawer;                 // 给Mat绘制文字
+    TextDrawer textDrawer;       // 给Mat绘制文字
     cv::Mat mainCanvas;          // 窗口内容画布
-    D2D1_SIZE_U bitmapSize = D2D1::SizeU(600, 400);
-
-    Microsoft::WRL::ComPtr<ID2D1Bitmap1> pBitmap;
-    D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
-        D2D1_BITMAP_OPTIONS_NONE,
-        D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
-    );
 
     CurImageParameter curPar;
     ExtraUIRes extraUIRes;
@@ -240,7 +232,9 @@ public:
     JarkViewerApp() {
         m_wndCaption = std::format(L"{} {}", appName, appVersion);
 
-        UINT dpi = GetDpiForSystem(); // 100%: 96 150%: 144 200%: 192
+        HDC hdc = GetDC(nullptr);
+        UINT dpi = hdc ? GetDeviceCaps(hdc, LOGPIXELSX) : 96; // 100%: 96 150%: 144 200%: 192
+        if (hdc) ReleaseDC(nullptr, hdc);
         if (dpi >= 144) {
             textDrawer.setSize(dpi < 168 ? 24 : 32);
         }
@@ -250,10 +244,10 @@ public:
     }
 
     HRESULT InitWindow(HINSTANCE hInstance) {
-        if (!SUCCEEDED(D2D1App::Initialize(hInstance)))
+        if (!SUCCEEDED(D3D11App::Initialize(hInstance)))
             return S_FALSE;
 
-        if (m_pD2DDeviceContext == nullptr)
+        if (m_pD3DDevice == nullptr)
             return S_FALSE;
 
         jarkUtils::setWindowIcon(m_hWnd, IDI_JARKVIEWER);
@@ -1583,18 +1577,7 @@ public:
     }
 
     void updateMainCanvas() {
-        m_pD2DDeviceContext->CreateBitmap(
-            bitmapSize,
-            mainCanvas.ptr(),
-            (UINT32)mainCanvas.step,
-            &bitmapProperties,
-            &pBitmap
-        );
-
-        m_pD2DDeviceContext->BeginDraw();
-        m_pD2DDeviceContext->DrawBitmap(pBitmap.Get());
-        m_pD2DDeviceContext->EndDraw();
-        m_pSwapChain->Present(0, 0);
+        PresentCanvas(mainCanvas.ptr(), mainCanvas.cols, mainCanvas.rows, (int)mainCanvas.step);
     }
 
 
@@ -1607,7 +1590,7 @@ public:
         if (GlobalVar::isNeedUpdateTheme) {
             GlobalVar::isNeedUpdateTheme = false;
             BOOL themeMode = GlobalVar::isCurrentUIDarkMode;
-            DwmSetWindowAttribute(m_hWnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &themeMode, sizeof(BOOL));
+            DwmSetWindowAttribute(m_hWnd, 20, &themeMode, sizeof(BOOL));
             operateQueue.push({ ActionENUM::normalFresh });
         }
 
@@ -1695,7 +1678,6 @@ public:
 
             if (winWidth != mainCanvas.cols || winHeight != mainCanvas.rows) {
                 mainCanvas = cv::Mat(winHeight, winWidth, CV_8UC4);
-                bitmapSize = D2D1::SizeU(winWidth, winHeight);
                 CreateWindowSizeDependentResources();
             }
 

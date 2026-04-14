@@ -445,34 +445,6 @@ void jarkUtils::copyImageToClipboard(const cv::Mat& image) {
 }
 
 
-// 创建路径几何图形
-ID2D1PathGeometry* jarkUtils::GetPathGeometry(ID2D1Factory4* pD2DFactory, D2D1_POINT_2F* points, UINT pointsCount)
-{
-    ID2D1PathGeometry* geometry = nullptr;
-    HRESULT hr = pD2DFactory->CreatePathGeometry(&geometry);
-
-    if (SUCCEEDED(hr))
-    {
-        ID2D1GeometrySink* pSink = nullptr;
-        hr = geometry->Open(&pSink); // 获取Sink对象
-
-        if (SUCCEEDED(hr))
-        {
-            pSink->BeginFigure(points[0], D2D1_FIGURE_BEGIN_FILLED);
-
-            pSink->AddLines(points, pointsCount);
-
-            pSink->EndFigure(D2D1_FIGURE_END_CLOSED);
-        }
-
-        pSink->Close(); // 关闭Sink对象
-
-        return geometry;
-    }
-
-    return nullptr;
-}
-
 void jarkUtils::ToggleFullScreen(HWND hwnd) {
     static RECT preRect{};
     static DWORD preStyle = 0;

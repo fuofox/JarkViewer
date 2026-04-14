@@ -240,7 +240,7 @@
     <ClInclude Include="include\psdsdk\PsdVectorMask.h">
       <Filter>include_psd</Filter>
     </ClInclude>
-    <ClInclude Include="include\D2D1App.h">
+    <ClInclude Include="include\D3D11App.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\lunasvg.h">
@@ -302,7 +302,7 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\D2D1App.cpp">
+    <ClCompile Include="src\D3D11App.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="include\videoDecoder.h">

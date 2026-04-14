@@ -6,7 +6,7 @@
     <LocalDebuggerCommandArgumentsHistory>"D:\Downloads\test\10.ico"|</LocalDebuggerCommandArgumentsHistory>
     <RemoteDebuggerCommand>C:\Debug\JarkViewer.exe</RemoteDebuggerCommand>
     <RemoteDebuggerWorkingDirectory>C:\Debug\</RemoteDebuggerWorkingDirectory>
-    <RemoteDebuggerServerName>192.168.123.41:4028</RemoteDebuggerServerName>
+    <RemoteDebuggerServerName>192.168.123.41:4026</RemoteDebuggerServerName>
     <RemoteDebuggerConnection>RemoteWithoutAuthentication</RemoteDebuggerConnection>
     <DeploymentDirectory>C:\Debug\</DeploymentDirectory>
     <RemoteDebuggerDeployDebugCppRuntime>false</RemoteDebuggerDeployDebugCppRuntime>
@@ -18,7 +18,7 @@
     <RemoteDebuggerConnection>RemoteWithoutAuthentication</RemoteDebuggerConnection>
     <RemoteDebuggerCommand>C:\Release\JarkViewer.exe</RemoteDebuggerCommand>
     <RemoteDebuggerWorkingDirectory>C:\Release\</RemoteDebuggerWorkingDirectory>
-    <RemoteDebuggerServerName>192.168.123.41:4028</RemoteDebuggerServerName>
+    <RemoteDebuggerServerName>192.168.123.41:4026</RemoteDebuggerServerName>
     <DeploymentDirectory>C:\Release\</DeploymentDirectory>
     <RemoteDebuggerDeployCppRuntime>false</RemoteDebuggerDeployCppRuntime>
   </PropertyGroup>

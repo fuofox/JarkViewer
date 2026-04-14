@@ -2,7 +2,6 @@
 
 #include "jarkUtils.h"
 #include "TextDrawer.h"
-#include "D2D1App.h"
 #include "FileAssociationManager.h"
 
 // TODO 检查更新

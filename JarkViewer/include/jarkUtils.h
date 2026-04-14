@@ -33,11 +33,8 @@ using std::unordered_map;
 #include "resource.h"
 
 #include "psapi.h"
-#include <dxgi1_4.h>
+#include <dxgi.h>
 #include <D3D11.h>
-#include <d2d1_3.h>
-#include <d2d1_3helper.h>
-#include <dwrite_2.h>
 #include <wincodec.h>
 #include <imm.h>
 #include <commdlg.h>
@@ -62,10 +59,8 @@ using std::unordered_map;
 #pragma comment(lib, "Psapi.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "dwrite.lib" )
 #pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "d2d1.lib" )
-#pragma comment(lib, "windowscodecs.lib" )
+#pragma comment(lib, "windowscodecs.lib")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Winmm.lib")
 #pragma comment(lib ,"imm32.lib")
@@ -522,9 +517,6 @@ public:
     static void flattenRGBAonWhite(cv::Mat& image);
 
     static void copyImageToClipboard(const cv::Mat& image);
-
-    // 创建路径几何图形
-    static ID2D1PathGeometry* GetPathGeometry(ID2D1Factory4* pD2DFactory, D2D1_POINT_2F* points, UINT pointsCount);
 
     static void ToggleFullScreen(HWND hwnd);
 
