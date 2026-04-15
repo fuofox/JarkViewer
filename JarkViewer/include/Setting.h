@@ -53,7 +53,7 @@ private:
     static inline std::vector<labelBox> labelList;
 
     TextDrawer textDrawer;
-    cv::Mat winCanvas, settingRes, helpPage, aboutPage, helpPageEN, aboutPageEN;
+    cv::Mat winCanvas, settingRes, helpPage, aboutPage, helpPageEN, aboutPageEN, helpPageDark, aboutPageDark, helpPageDarkEN, aboutPageDarkEN;
 
     void Init(int tabIdx = 0) {
         textDrawer.setSize(24);
@@ -63,11 +63,18 @@ private:
         rcFileInfo rc;
         rc = jarkUtils::GetResource(IDB_PNG_SETTING_RES, L"PNG");
         settingRes = cv::imdecode(cv::Mat(1, (int)rc.size, CV_8UC1, (uint8_t*)rc.ptr), cv::IMREAD_UNCHANGED);
+        if (settingRes.channels() == 3)
+            cv::cvtColor(settingRes, settingRes, cv::COLOR_BGR2BGRA);
         
         helpPage = settingRes({ 0, 0, 1000, 650 });
         helpPageEN = settingRes({ 1000, 0, 1000, 650 });
-        aboutPage = settingRes({ 0, 650, 1000, 650 });
-        aboutPageEN = settingRes({ 1000, 650, 1000, 650 });        
+        helpPageDark = settingRes({ 0, 650, 1000, 650 });
+        helpPageDarkEN = settingRes({ 1000, 650, 1000, 650 });
+
+        aboutPage = settingRes({ 0, 1300, 1000, 650 });
+        aboutPageEN = settingRes({ 1000, 1300, 1000, 650 });
+        aboutPageDark = settingRes({ 0, 1950, 1000, 650 });
+        aboutPageDarkEN = settingRes({ 1000, 1950, 1000, 650 });
 
         // GeneralTab
         if (generalTabCheckBoxList.empty()) {
@@ -216,14 +223,22 @@ public:
     }
 
     void refreshHelpTab() {
-        jarkUtils::overlayImg(winCanvas, GlobalVar::settingParameter.UI_LANG == 0 ? helpPage : helpPageEN, 0, 50);
+        if (GlobalVar::isCurrentUIDarkMode)
+            jarkUtils::overlayImg(winCanvas, GlobalVar::settingParameter.UI_LANG == 0 ? helpPageDark : helpPageDarkEN, 0, 50);
+        else
+            jarkUtils::overlayImg(winCanvas, GlobalVar::settingParameter.UI_LANG == 0 ? helpPage : helpPageEN, 0, 50);
     }
 
     void refreshAboutTab() {
-        jarkUtils::overlayImg(winCanvas, GlobalVar::settingParameter.UI_LANG == 0 ? aboutPage : aboutPageEN, 0, 50);
-        textDrawer.putAlignCenter(winCanvas, { 0, 480, 400, 40 }, jarkUtils::wstringToUtf8(appVersion).c_str(), { 186, 38, 60, 255 });
-        textDrawer.putAlignCenter(winCanvas, { 0, 570, 400, 40 }, getUIString(19), { 186, 38, 60, 255 });
-        textDrawer.putAlignCenter(winCanvas, { 0, 600, 400, 40 }, jarkUtils::COMPILE_DATE_TIME, { 186, 38, 60, 255 });
+        if (GlobalVar::isCurrentUIDarkMode)
+            jarkUtils::overlayImg(winCanvas, GlobalVar::settingParameter.UI_LANG == 0 ? aboutPageDark : aboutPageDarkEN, 0, 50);
+        else
+            jarkUtils::overlayImg(winCanvas, GlobalVar::settingParameter.UI_LANG == 0 ? aboutPage : aboutPageEN, 0, 50);
+
+        auto textColor = GlobalVar::currentTheme.VER;
+        textDrawer.putAlignCenter(winCanvas, { 0, 530, 400, 40 }, jarkUtils::wstringToUtf8(appVersion).c_str(), textColor);
+        textDrawer.putAlignCenter(winCanvas, { 0, 570, 400, 40 }, getUIString(19), textColor);
+        textDrawer.putAlignCenter(winCanvas, { 0, 600, 400, 40 }, jarkUtils::COMPILE_DATE_TIME, textColor);
 
 #ifndef NDEBUG
         cv::rectangle(winCanvas, jarkBtnRect, jarkUtils::to_cv_scalar(DEBUG_COLOR), 1);
@@ -483,8 +498,21 @@ public:
                 refreshUI();
             }
 
-            if (cv::waitKey(10) == 27) // ESC
-                requestExit();
+            auto keyValue = cv::waitKey(10);
+            if (keyValue > 0) {
+                switch (keyValue) {
+                case VK_ESCAPE: // ESC
+                    requestExit();
+                    break;
+                case VK_TAB:
+                    curTabIdx = (curTabIdx + 1) % 4;
+                    isNeedRefreshUI = true;
+                    break;
+                default:
+                    JARK_LOG("keyValue: {}", keyValue);
+                    break;
+                }
+            }
             if (requestExitFlag) {
                 cv::destroyWindow(windowsName);
                 break;

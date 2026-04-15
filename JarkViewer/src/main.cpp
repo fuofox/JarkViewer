@@ -739,7 +739,7 @@ public:
             }break;
 
             case 'W': {
-                const int newTargetYMax = ((curPar.rotation == 0 or curPar.rotation == 2) ? 
+                const int newTargetYMax = ((curPar.rotation == 0 or curPar.rotation == 2) ?
                     curPar.height : curPar.width) * curPar.zoomTarget / 2 / curPar.ZOOM_BASE;
                 int newTargetY = curPar.slideTarget.y + ((winHeight + winWidth) / 16);
                 newTargetY = std::clamp(newTargetY, -newTargetYMax, newTargetYMax);
@@ -748,7 +748,7 @@ public:
             }break;
 
             case 'S': {
-                const int newTargetYMax = ((curPar.rotation == 0 or curPar.rotation == 2) ? 
+                const int newTargetYMax = ((curPar.rotation == 0 or curPar.rotation == 2) ?
                     curPar.height : curPar.width) * curPar.zoomTarget / 2 / curPar.ZOOM_BASE;
                 int newTargetY = curPar.slideTarget.y - ((winHeight + winWidth) / 16);
                 newTargetY = std::clamp(newTargetY, -newTargetYMax, newTargetYMax);
@@ -757,7 +757,7 @@ public:
             }break;
 
             case 'A': {
-                const int newTargetXMax = ((curPar.rotation == 0 || curPar.rotation == 2) ? 
+                const int newTargetXMax = ((curPar.rotation == 0 || curPar.rotation == 2) ?
                     curPar.width : curPar.height) * curPar.zoomTarget / 2 / curPar.ZOOM_BASE;
                 int newTargetX = curPar.slideTarget.x + ((winHeight + winWidth) / 16);
                 newTargetX = std::clamp(newTargetX, -newTargetXMax, newTargetXMax);
@@ -766,7 +766,7 @@ public:
             }break;
 
             case 'D': {
-                const int newTargetXMax = ((curPar.rotation == 0 || curPar.rotation == 2) ? 
+                const int newTargetXMax = ((curPar.rotation == 0 || curPar.rotation == 2) ?
                     curPar.width : curPar.height) * curPar.zoomTarget / 2 / curPar.ZOOM_BASE;
                 int newTargetX = curPar.slideTarget.x - ((winHeight + winWidth) / 16);
                 newTargetX = std::clamp(newTargetX, -newTargetXMax, newTargetXMax);
@@ -826,11 +826,19 @@ public:
             }break;
 
             case VK_F1: {
+                operateQueue.push({ ActionENUM::setting, 0 });
+            }break;
+
+            case VK_F2: {
+                operateQueue.push({ ActionENUM::setting, 1 });
+            }break;
+
+            case VK_F3: {
                 operateQueue.push({ ActionENUM::setting, 2 });
             }break;
 
-            case VK_F12: {
-                operateQueue.push({ ActionENUM::setting, 0 });
+            case VK_F4: {
+                operateQueue.push({ ActionENUM::setting, 3 });
             }break;
 
             case VK_ESCAPE: { // ESC

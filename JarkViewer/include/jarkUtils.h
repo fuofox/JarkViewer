@@ -102,15 +102,17 @@ struct ThemeColor {
     uint32_t CHECK;      // 选中背景
     uint32_t BLACK_GRID; // 深色棋盘格子
     uint32_t WHITE_GRID; // 浅色棋盘格子
+
+    uint32_t VER;        // 版本文字颜色
 };
 
 inline constexpr ThemeColor deepTheme{
     0xFFF6F8FE, 0xFFF1F3F9, 0xFFECEEF4, 0xFF666666, 0xFF1F2024, 0xFF1A1B1F,
-    0xFF3E4048, 0xFF666666, 0xFF006AA4, 0xFF282828, 0xFF3C3C3C
+    0xFF3E4048, 0xFF666666, 0xFF006AA4, 0xFF282828, 0xFF3C3C3C, 0xFFBCB4EF,
 };
 inline constexpr ThemeColor lightTheme{
     0xFF666666, 0xFF1F2024, 0xFF1A1B1F, 0xFFF6F8FE, 0xFFF1F3F9, 0xFFECEEF4,
-    0xFFCDD7E8, 0xFFCDD7E8, 0xFF4CC2FF, 0xFFDDDDDD, 0xFFFFFFFF
+    0xFFCDD7E8, 0xFFCDD7E8, 0xFF4CC2FF, 0xFFDDDDDD, 0xFFFFFFFF, 0xFF3C26BA,
 };
 
 // 不要随意更改此结构体的成员顺序或大小，否则会导致设置文件无法兼容
