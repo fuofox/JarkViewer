@@ -1071,7 +1071,7 @@ public:
         std::fill(ptrStart, ptrEnd, GlobalVar::currentTheme.BG);
 
         if (((srcH == 600 and srcW == 800) or (srcH == 800 and srcW == 600)) and 
-            (*((uint32_t*)srcImg.ptr()) == 0xFF464646) or(*((uint32_t*)srcImg.ptr()) == 0xFFEEEEEE)) {
+            (*((uint32_t*)srcImg.ptr()) == deepTheme.BG) or (*((uint32_t*)srcImg.ptr()) == lightTheme.BG)) {
             // 内置的用于提示的图像
         }
         else { // 普通图像  画边框
