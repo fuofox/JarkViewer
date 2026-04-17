@@ -62,4 +62,9 @@ protected:
     UINT m_stagingHeight = 0;
     // 所创设备特性等级
     D3D_FEATURE_LEVEL m_featureLevel;
+
+    int winWidth = 800;
+    int winHeight = 600;
+    bool hasInitWinSize = false;
+    cv::Mat mainCanvas;
 };

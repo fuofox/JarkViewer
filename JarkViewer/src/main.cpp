@@ -213,18 +213,12 @@ public:
     bool smoothShift = false;
     bool showExif = false;
     Cood mousePos, mousePressPos;
-    int winWidth = 800;
-    int winHeight = 600;
-    bool hasInitWinSize = false;
-
     ImageDatabase imgDB;
 
     int curFileIdx = -1;         // 文件在路径列表的索引
     vector<wstring> imgFileList; // 工作目录下所有图像文件路径
 
     TextDrawer textDrawer;       // 给Mat绘制文字
-    cv::Mat mainCanvas;          // 窗口内容画布
-
     CurImageParameter curPar;
     ExtraUIRes extraUIRes;
     std::chrono::steady_clock::time_point lastClickTimestamp{}, lastWinResizeTimestamp{};
@@ -251,7 +245,6 @@ public:
             return S_FALSE;
 
         jarkUtils::setWindowIcon(m_hWnd, IDI_JARKVIEWER);
-        GlobalVar::currentTheme = GlobalVar::isCurrentUIDarkMode ? deepTheme : lightTheme;
         return S_OK;
     }
 
@@ -960,7 +953,43 @@ public:
     }
 
     void OnResize(UINT width, UINT height) override {
-        operateQueue.push({ ActionENUM::newSize, (int)width, (int)height });
+        if (width == 0 || height == 0)
+            return;
+
+        if (winWidth == width && winHeight == height)
+            return;
+
+        winWidth = width;
+        winHeight = height;
+
+        if (winWidth != mainCanvas.cols || winHeight != mainCanvas.rows) {
+            mainCanvas = cv::Mat(winHeight, winWidth, CV_8UC4);
+            CreateWindowSizeDependentResources();
+        }
+
+        if (hasInitWinSize) {
+            curPar.updateZoomList(winWidth, winHeight);
+
+            cv::Mat srcImg;
+            if (curPar.imageAssetPtr->format == ImageFormat::None || curPar.imageAssetPtr->format == ImageFormat::Still)
+                srcImg = curPar.imageAssetPtr->primaryFrame;
+            else
+                srcImg = curPar.imageAssetPtr->frames[curPar.curFrameIdx];
+
+            drawCanvas(srcImg, mainCanvas);
+            drawExifInfo(mainCanvas);
+        }
+        else {
+            hasInitWinSize = true;
+            curPar.Init(winWidth, winHeight);
+
+            uint32_t* ptrStart = (uint32_t*)mainCanvas.ptr();
+            uint32_t* ptrEnd = ptrStart + winHeight * winWidth;
+            std::fill(ptrStart, ptrEnd, GlobalVar::currentTheme.BG);
+        }
+
+        updateMainCanvas();
+        operateQueue.push({ ActionENUM::normalFresh });
     }
 
     uint32_t getSrcPx1(const cv::Mat& srcImg, int srcX, int srcY) const {
@@ -1271,7 +1300,7 @@ public:
         for (int i = 0; i <= 90; i += ((100 - i) / 6)) {
             auto start_clock = steady_clock::now();
             auto view = rotateImage(tmpCanvas, i)(cv::Rect((maxEdge - winWidth) / 4, (maxEdge - winHeight) / 4, winWidth / 2, winHeight / 2));
-            cv::resize(view, mainCanvas, cv::Size(winWidth, winHeight), 0, 0, cv::INTER_NEAREST);
+            cv::resize(view, mainCanvas, mainCanvas.size(), 0, 0, cv::INTER_NEAREST);
             drawExifInfo(mainCanvas);
             drawExtraUI(mainCanvas);
 
@@ -1303,7 +1332,7 @@ public:
         for (int i = 0; i >= -90; i -= ((100 + i) / 6)) {
             auto start_clock = steady_clock::now();
             auto view = rotateImage(tmpCanvas, i)(cv::Rect((maxEdge - winWidth) / 4, (maxEdge - winHeight) / 4, winWidth / 2, winHeight / 2));
-            cv::resize(view, mainCanvas, cv::Size(winWidth, winHeight), 0, 0, cv::INTER_NEAREST);
+            cv::resize(view, mainCanvas, mainCanvas.size(), 0, 0, cv::INTER_NEAREST);
             drawExifInfo(mainCanvas);
             drawExtraUI(mainCanvas);
 
@@ -1392,7 +1421,7 @@ public:
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(x, 0, frame_width, frame_height));
-            cv::resize(view, mainCanvas, cv::Size(winWidth, winHeight), 0, 0, cv::INTER_NEAREST);
+            cv::resize(view, mainCanvas, mainCanvas.size(), 0, 0, cv::INTER_NEAREST);
             drawExtraUI(mainCanvas);
 
             updateMainCanvas();
@@ -1434,7 +1463,7 @@ public:
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(x, 0, frame_width, frame_height));
-            cv::resize(view, mainCanvas, cv::Size(winWidth, winHeight), 0, 0, cv::INTER_NEAREST);
+            cv::resize(view, mainCanvas, mainCanvas.size(), 0, 0, cv::INTER_NEAREST);
             drawExtraUI(mainCanvas);
 
             updateMainCanvas();
@@ -1476,7 +1505,7 @@ public:
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(0, y, frame_width, frame_height));
-            cv::resize(view, mainCanvas, cv::Size(winWidth, winHeight), 0, 0, cv::INTER_NEAREST);
+            cv::resize(view, mainCanvas, mainCanvas.size(), 0, 0, cv::INTER_NEAREST);
             drawExtraUI(mainCanvas);
 
             updateMainCanvas();
@@ -1518,7 +1547,7 @@ public:
             auto start_clock = steady_clock::now();
 
             cv::Mat view = panorama(cv::Rect(0, y, frame_width, frame_height));
-            cv::resize(view, mainCanvas, cv::Size(winWidth, winHeight), 0, 0, cv::INTER_NEAREST);
+            cv::resize(view, mainCanvas, mainCanvas.size(), 0, 0, cv::INTER_NEAREST);
             drawExtraUI(mainCanvas);
 
             updateMainCanvas();
@@ -1668,36 +1697,7 @@ public:
         }
 
         // 以下action均需要刷新画面
-        switch (operateAction.action)
-        {
-        case ActionENUM::newSize: {
-            while (operateQueue.isNext(ActionENUM::newSize)) {
-                operateAction = operateQueue.get();
-            }
-
-            if (operateAction.width == 0 || operateAction.height == 0)
-                break;
-
-            if (winWidth == operateAction.width && winHeight == operateAction.height)
-                break;
-
-            winWidth = operateAction.width;
-            winHeight = operateAction.height;
-
-            if (winWidth != mainCanvas.cols || winHeight != mainCanvas.rows) {
-                mainCanvas = cv::Mat(winHeight, winWidth, CV_8UC4);
-                CreateWindowSizeDependentResources();
-            }
-
-            if (hasInitWinSize) {
-                curPar.updateZoomList(winWidth, winHeight);
-            }
-            else {
-                hasInitWinSize = true;
-                curPar.Init(winWidth, winHeight);
-            }
-        } break;
-
+        switch (operateAction.action) {
         case ActionENUM::preImg: {
             if (imgFileList.size() <= 1)
                 break;

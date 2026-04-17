@@ -71,6 +71,10 @@ private:
 
 D3D11App::D3D11App() {
     loadSettings();
+
+    GlobalVar::isSystemDarkMode = jarkUtils::getSystemDarkMode();
+    GlobalVar::isCurrentUIDarkMode = GlobalVar::settingParameter.UI_Mode == 0 ? GlobalVar::isSystemDarkMode : (GlobalVar::settingParameter.UI_Mode == 2);
+    GlobalVar::currentTheme = GlobalVar::isCurrentUIDarkMode ? deepTheme : lightTheme;
 }
 
 D3D11App::~D3D11App() {
@@ -190,8 +194,6 @@ HRESULT D3D11App::Initialize(HINSTANCE hInstance) {
 
         DragAcceptFiles(m_hWnd, TRUE);
 
-        GlobalVar::isSystemDarkMode = jarkUtils::getSystemDarkMode();
-        GlobalVar::isCurrentUIDarkMode = GlobalVar::settingParameter.UI_Mode == 0 ? GlobalVar::isSystemDarkMode : (GlobalVar::settingParameter.UI_Mode == 2);
 
         // DWMWA_USE_IMMERSIVE_DARK_MODE(20) 仅 Win10 1809+ 生效，Win7 上返回 E_INVALIDARG 但不影响运行
         BOOL themeMode = GlobalVar::isCurrentUIDarkMode;
