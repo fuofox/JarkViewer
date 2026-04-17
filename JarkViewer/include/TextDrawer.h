@@ -18,13 +18,13 @@ public:
     void setSize(int newSize);
 
     // str : UTF-8
-    void putText(cv::Mat& img, const int x, const int y, const char* str, intUnion color);
+    void putText(cv::Mat& img, const int x, const int y, const char* str, intUnion color, bool isAdaptiveFG = false);
 
     //Rect {x, y, width, height}
-    void putAlignCenter(cv::Mat& img, cv::Rect rect, const char* str, intUnion color);
+    void putAlignCenter(cv::Mat& img, cv::Rect rect, const char* str, intUnion color, bool isAdaptiveFG = false);
 
     //Rect {x, y, width, height}
-    void putAlignLeft(cv::Mat& img, cv::Rect rect, const char* str, intUnion color);
+    void putAlignLeft(cv::Mat& img, cv::Rect rect, const char* str, intUnion color, bool isAdaptiveFG = false);
 
 private:
     bool hasInit = false;
@@ -40,5 +40,5 @@ private:
     rcFileInfo rc;
 
     void Init(unsigned int idi, const wchar_t* type);
-    int putWord(cv::Mat& img, int x, int y, const int codePoint, intUnion color);
+    int putWord(cv::Mat& img, int x, int y, const int codePoint, intUnion color, bool isAdaptiveFG);
 };

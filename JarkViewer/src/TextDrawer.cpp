@@ -21,7 +21,7 @@ void TextDrawer::setSize(int newSize) {
 }
 
 // str : UTF-8
-void TextDrawer::putText(cv::Mat& img, const int x, const int y, const char* str, intUnion color) {
+void TextDrawer::putText(cv::Mat& img, const int x, const int y, const char* str, intUnion color, bool isAdaptiveFG) {
     if (!hasInit) {
         Init(IDR_TTF_DEFAULT, L"TTF");
         hasInit = true;
@@ -61,13 +61,13 @@ void TextDrawer::putText(cv::Mat& img, const int x, const int y, const char* str
             xOffset = x;
         }
         else {
-            xOffset += putWord(img, xOffset, yOffset, codePoint, color);
+            xOffset += putWord(img, xOffset, yOffset, codePoint, color, isAdaptiveFG);
         }
     }
 }
 
 //Rect {x, y, width, height}
-void TextDrawer::putAlignCenter(cv::Mat& img, cv::Rect rect, const char* str, intUnion color) {
+void TextDrawer::putAlignCenter(cv::Mat& img, cv::Rect rect, const char* str, intUnion color, bool isAdaptiveFG) {
     int codePoint = '?';
     int H = 1, W = 0, W_cnt = 0;
     const auto len = strlen(str);
@@ -116,11 +116,11 @@ void TextDrawer::putAlignCenter(cv::Mat& img, cv::Rect rect, const char* str, in
     const int x = rect.x + (rect.width - W) / 2;
     const int y = rect.y + (rect.height - H) / 2;
 
-    putText(img, x, y, str, color);
+    putText(img, x, y, str, color, isAdaptiveFG);
 }
 
 //Rect {x, y, width, height}
-void TextDrawer::putAlignLeft(cv::Mat& img, cv::Rect rect, const char* str, intUnion color) {
+void TextDrawer::putAlignLeft(cv::Mat& img, cv::Rect rect, const char* str, intUnion color, bool isAdaptiveFG) {
     if (!hasInit) {
         Init(IDR_TTF_DEFAULT, L"TTF");
         hasInit = true;
@@ -170,7 +170,7 @@ void TextDrawer::putAlignLeft(cv::Mat& img, cv::Rect rect, const char* str, intU
                 continue;
         }
 
-        xOffset += putWord(img, xOffset, yOffset, codePoint, color);
+        xOffset += putWord(img, xOffset, yOffset, codePoint, color, isAdaptiveFG);
     }
 }
 
@@ -193,7 +193,7 @@ void TextDrawer::Init(unsigned int idi, const wchar_t* type) {
     asciiCache.resize(256);
 }
 
-int TextDrawer::putWord(cv::Mat& img, int x, int y, const int codePoint, intUnion color) {
+int TextDrawer::putWord(cv::Mat& img, int x, int y, const int codePoint, intUnion color, bool isAdaptiveFG) {
     int c_x0, c_y0, c_x1, c_y1;
     stbtt_GetCodepointBitmapBox(&info, codePoint, scale, scale, &c_x0, &c_y0, &c_x1, &c_y1);
 
@@ -227,6 +227,12 @@ int TextDrawer::putWord(cv::Mat& img, int x, int y, const int codePoint, intUnio
                 break;
 
             auto& orgColor = ptr[x + xx];
+
+            if (isAdaptiveFG) {
+                int gray = (306 * orgColor[0] + 601 * orgColor[1] + 117 * orgColor[2]) / 1024;
+                color = gray < 128 ? deepTheme.FG : lightTheme.FG;
+            }
+
             int alpha = wordBuffPtr[yy * fontSize + xx] * color[3] / 255;
             if (alpha)
                 orgColor = {

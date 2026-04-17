@@ -1561,7 +1561,7 @@ public:
             const int padding = 10;
             const int areaWidth = (canvas.cols - 2 * padding) / 4;
             cv::Rect rect{ padding, padding, std::max(areaWidth, 400), canvas.rows - 2 * padding };
-            textDrawer.putAlignLeft(canvas, rect, curPar.imageAssetPtr->exifInfo.c_str(), GlobalVar::currentTheme.FG);
+            textDrawer.putAlignLeft(canvas, rect, curPar.imageAssetPtr->exifInfo.c_str(), GlobalVar::currentTheme.FG, true);
         }
     }
 
