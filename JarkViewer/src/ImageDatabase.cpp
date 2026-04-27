@@ -1279,33 +1279,39 @@ cv::Mat ImageDatabase::loadPSD(wstring_view path, std::span<const uint8_t> buf) 
 }
 
 
-cv::Mat ImageDatabase::loadTGA_HDR(wstring_view path, std::span<const uint8_t> buf) {
-    int width, height, channels;
+cv::Mat ImageDatabase::loadSTB(wstring_view path, std::span<const uint8_t> buf) {
+    int width = 0, height = 0, originalChannels = 0;
 
-    // 使用stb_image从内存缓冲区加载图像
-    uint8_t* pxData = stbi_load_from_memory(buf.data(), (int)buf.size(), &width, &height, &channels, 0);
+    if (buf.empty()) {
+        JARK_LOG("Empty image buffer: {}", jarkUtils::wstringToUtf8(path));
+        return {};
+    }
+    if (buf.size() > INT_MAX) {
+        JARK_LOG("Image buffer too large: {}, size: {}", jarkUtils::wstringToUtf8(path), buf.size());
+        return {};
+    }
+
+    std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> pxData{
+        stbi_load_from_memory(buf.data(), (int)buf.size(), &width, &height, &originalChannels, STBI_rgb_alpha),
+        stbi_image_free
+    };
 
     if (!pxData) {
-        JARK_LOG("Failed to load image: {}", jarkUtils::wstringToUtf8(path));
+        JARK_LOG("Failed to load image: {}, reason: {}", jarkUtils::wstringToUtf8(path), stbi_failure_reason());
         return {};
     }
 
-    // 确定OpenCV的色彩空间
-    int cv_type;
-    switch (channels) {
-    case 1: cv_type = CV_8UC1; break;
-    case 3: cv_type = CV_8UC3; break;
-    case 4: cv_type = CV_8UC4; break;
-    default:
-        stbi_image_free(pxData);
-        JARK_LOG("Unsupported number of channels:{} {}", channels, jarkUtils::wstringToUtf8(path));
-        return {};
+    try {
+        cv::Mat rgba(height, width, CV_8UC4, pxData.get(), width * 4ULL);
+        cv::Mat bgra;
+        cv::cvtColor(rgba, bgra, cv::COLOR_RGBA2BGRA);
+        return bgra;
+    }
+    catch (const std::exception& e) {
+        JARK_LOG("Exception while processing image {}: {}", jarkUtils::wstringToUtf8(path), e.what());
     }
 
-    auto result = cv::Mat(height, width, cv_type, pxData).clone();
-    stbi_image_free(pxData);
-
-    return result;
+    return {};
 }
 
 
@@ -2563,8 +2569,8 @@ ImageAsset ImageDatabase::myLoader(const wstring& path) {
     if (ext == L"jxr") {
         img = loadImageWinCOM(path, fileBuf);
     }
-    else if (ext == L"tga" || ext == L"hdr") {
-        img = loadTGA_HDR(path, fileBuf);
+    else if (ext == L"tga" || ext == L"hdr" || ext == L"pic") {
+        img = loadSTB(path, fileBuf);
         exifInfo = ExifParse::getSimpleInfo(path, img.cols, img.rows, fileBuf.data(), fileBuf.size());
     }
     else if (ext == L"svg") {
@@ -2598,8 +2604,10 @@ ImageAsset ImageDatabase::myLoader(const wstring& path) {
     else if (ext == L"ico" || ext == L"icon") {
         std::tie(img, exifInfo) = loadICO(path, fileBuf);
     }
-    else if (ext == L"psd") {
-        img = loadPSD(path, fileBuf);
+    else if (ext == L"psd" || ext == L"psdt") {
+        img = loadSTB(path, fileBuf);
+		if (img.empty())
+            img = loadPSD(path, fileBuf);
         if (img.empty())
             img = getErrorTipsMat();
     }

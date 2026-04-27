@@ -84,7 +84,7 @@
 #include "psdsdk.h"
 #pragma comment(lib, "Psd_MT.lib")
 
-// lunasvg v3.4.0  https://github.com/sammycage/lunasvg
+// lunasvg v3.5.0  https://github.com/sammycage/lunasvg
 #include "lunasvg.h"
 #pragma comment(lib, "lunasvg.lib")
 #pragma comment(lib, "plutovg.lib")
@@ -246,13 +246,12 @@ public:
     };
 
     static inline const unordered_set<wstring_view> supportExt{
-        L"jpg", L"jp2", L"jpeg", L"jpe", L"bmp", L"dib", L"png", L"apng",
-        L"pbm", L"pgm", L"ppm", L"pxm",L"pnm",L"sr", L"ras",
-        L"exr", L"tiff", L"tif", L"webp", L"hdr", L"pic",
-        L"heic", L"heif", L"avif", L"avifs", L"gif", L"jxl",
-        L"ico", L"icon", L"psd", L"tga", L"svg", L"jfif",
-        L"jxr", L"wp2", L"pfm", L"livp", L"qoi", L"blp",
-        L"pcx", L"webm",
+        L"apng", L"avif", L"avifs", L"blp", L"bmp", L"dib", L"exr", L"gif", 
+        L"hdr", L"heic", L"heif", L"ico", L"icon", L"jfif", L"jp2", L"jpe", 
+        L"jpeg", L"jpg", L"jxl", L"jxr", L"livp", L"pbm", L"pcx", L"pfm", 
+        L"pgm", L"pic", L"png", L"pnm", L"ppm", L"psd", L"psdt", L"pxm", 
+        L"qoi", L"ras", L"sr", L"svg", L"tga", L"tif", L"tiff", L"webm", 
+        L"webp", L"wp2",
     };
 
     static inline const unordered_set<wstring_view> supportRaw{
@@ -459,7 +458,7 @@ public:
 
     // https://github.com/MolecularMatters/psd_sdk
     cv::Mat loadPSD(wstring_view path, std::span<const uint8_t> buf);
-    cv::Mat loadTGA_HDR(wstring_view path, std::span<const uint8_t> buf);
+    cv::Mat loadSTB(wstring_view path, std::span<const uint8_t> buf);
     cv::Mat loadSVG(wstring_view path, std::span<const uint8_t> buf);
     cv::Mat loadPFM(wstring_view path, std::span<const uint8_t> buf);
     cv::Mat loadQOI(wstring_view path, std::span<const uint8_t> buf);
