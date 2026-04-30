@@ -1680,7 +1680,7 @@ public:
         if (operateAction.action == ActionENUM::setting) {
             if (Setting::isWorking) {
                 Setting::curTabIdx = operateAction.value1;
-                Setting::isNeedRefreshUI = true;
+                PostMessageW(Setting::hwnd, MatWindow::WM_MATWINDOW_DRAW_REQUEST, 0, 0);
                 jarkUtils::activateWindow(Setting::hwnd);
             }
             else {

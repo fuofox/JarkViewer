@@ -109,9 +109,9 @@ private:
     }
 
 public:
+    static inline volatile bool isWorking = false;
     static inline volatile HWND hwnd = nullptr;
     static inline volatile int curTabIdx = 0; // 0:常规  1:文件关联  2:帮助  3:关于
-    static inline volatile bool isWorking = false;
 
     Setting(int tabIdx = 0) {
         requestExitFlag = false;
@@ -253,12 +253,9 @@ public:
     }
 
     void onLButtonUp() override {
-        int& x = m_x;
-        int& y = m_y;
-
         // 标签栏点击
-        if (y < 50) {
-            int newTabIdx = x / tabWidth;
+        if (m_y < 50) {
+            int newTabIdx = m_x / tabWidth;
             if (newTabIdx <= 3 && newTabIdx != curTabIdx) {
                 switch (curTabIdx) {
                 case 0: finishGeneralTab(); break;
@@ -272,16 +269,13 @@ public:
 
         // 各 Tab 点击处理
         switch (curTabIdx) {
-        case 0: handleGeneralTab(cv::EVENT_LBUTTONUP, x, y, 0); break;
-        case 1: handleAssociateTab(cv::EVENT_LBUTTONUP, x, y, 0); break;
-        case 3: handleAboutTab(cv::EVENT_LBUTTONUP, x, y, 0); break;
+        case 0: handleGeneralTab(cv::EVENT_LBUTTONUP, m_x, m_y, 0); break;
+        case 1: handleAssociateTab(cv::EVENT_LBUTTONUP, m_x, m_y, 0); break;
+        case 3: handleAboutTab(cv::EVENT_LBUTTONUP, m_x, m_y, 0); break;
         }
     }
 
     void onRButtonUp() override {
-        int& x = m_x;
-        int& y = m_y;
-
         if (GlobalVar::settingParameter.rightClickAction == 1) {
             PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
         }
@@ -297,7 +291,7 @@ public:
         }
     }
 
-    void refreshUI() {
+    void drawingUI() override {
         // 绘制标签栏
         cv::rectangle(winCanvas, { 0, 0, winWidth, tabHeight }, jarkUtils::to_cv_scalar(GlobalVar::currentTheme.BG_TAG), -1);
         cv::rectangle(winCanvas, { curTabIdx * tabWidth, 0, tabWidth, tabHeight }, jarkUtils::to_cv_scalar(GlobalVar::currentTheme.BG), -1);
@@ -312,11 +306,9 @@ public:
         case 2:refreshHelpTab(); break;
         default:refreshAboutTab(); break;
         }
-        
-        invalidate();
     }
 
-    static void handleGeneralTab(int event, int x, int y, int flags) {
+    void handleGeneralTab(int event, int x, int y, int flags) {
         if (event == cv::EVENT_LBUTTONUP) {
             for (auto& cbox : generalTabCheckBoxList) {
                 if (isInside(x, y, cbox.rect)) {
@@ -346,18 +338,18 @@ public:
         }
     }
 
-    static void finishGeneralTab() {
+    void finishGeneralTab() {
 
     }
 
-    static void updateWindowAttribute() {
+    void updateWindowAttribute() {
         if (hwnd) {
             BOOL themeMode = GlobalVar::isCurrentUIDarkMode;
             DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &themeMode, sizeof(BOOL));
         }
     }
 
-    static int getGridIndex(int x, int y, int xOffset = 50, int yOffset = 200,
+    int getGridIndex(int x, int y, int xOffset = 50, int yOffset = 200,
         int gridW = 20, int gridH = 10, int colsPerRow = 10, int idxMax = -1) {  // 默认不检查 idxMax
         int relativeX = x - xOffset;
         int relativeY = y - yOffset;
@@ -377,20 +369,20 @@ public:
     }
 
     template<typename T>
-    static void toggle(std::set<T>& s, const T& value) {
+    void toggle(std::set<T>& s, const T& value) {
         if (!s.insert(value).second) {
             s.erase(value);
         }
     }
 
-    static bool SetupFileAssociations(const std::vector<std::wstring>& extChecked,
+    bool SetupFileAssociations(const std::vector<std::wstring>& extChecked,
         const std::vector<std::wstring>& extUnchecked) {
 
         FileAssociationManager manager;
         return manager.ManageFileAssociations(extChecked, extUnchecked);
     }
 
-    static void handleAssociateTab(int event, int x, int y, int flags) {
+    void handleAssociateTab(int event, int x, int y, int flags) {
 
         // 需和 refreshAssociateTab 参数保持一致
         const int xOffset = 20, yOffset = 70;
@@ -458,7 +450,7 @@ public:
 
     }
 
-    static void finishAssociateTab() {
+    void finishAssociateTab() {
         std::string checkedList;
         for (const auto& ext : checkedExt) {
             checkedList += ext;
@@ -472,11 +464,11 @@ public:
             memcpy(GlobalVar::settingParameter.extCheckedListStr, checkedList.data(), checkedList.length() + 1);
     }
 
-    static bool isInside(int x, int y, const cv::Rect& rect) {
+    bool isInside(int x, int y, const cv::Rect& rect) {
         return rect.x < x && x < (rect.x + rect.width) && rect.y < y && y < (rect.y + rect.height);
     }
 
-    static void handleAboutTab(int event, int x, int y, int flags) {
+    void handleAboutTab(int event, int x, int y, int flags) {
         if (event == cv::EVENT_LBUTTONUP) {
             if (isInside(x, y, jarkBtnRect)) {
                 jarkUtils::openUrl(jarkLink.data());
@@ -493,19 +485,11 @@ public:
         }
     }
 
-    void idleTask() override {
-        if (isNeedRefreshUI) {
-            isNeedRefreshUI = false;
-            refreshUI();
-        }
-    }
-
     void windowsMainLoop() {
         if (!createWindow(winWidth, winHeight, windowsClassName, getUIStringW(39)))
             return;
 
         hwnd = m_hwnd;
-        refreshUI();
         runMessageLoop();
 
         // 退出时保存当前 Tab 状态

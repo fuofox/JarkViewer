@@ -3,7 +3,7 @@
 #include "jarkUtils.h"
 
 // 轻量基类：为 Setting/Printer 提供 Win32 窗口骨架
-// 使用 GDI StretchDIBits 渲染 cv::Mat，替代 OpenCV HighGUI
+// 使用 GDI StretchDIBits 渲染 cv::Mat
 class MatWindow {
 protected:
     HWND m_hwnd = nullptr;
@@ -70,13 +70,34 @@ protected:
         return true;
     }
 
+    virtual void drawingUI() = 0;
+
     void runMessageLoop() {
         MSG msg;
+
+        std::thread drawThread([this]() {
+            while (isDrawThreadRuning) {
+                if (isNeedRefreshUI) {
+                    isNeedRefreshUI = false;
+                    drawingUI();
+                    isDrawDone = true;
+                    if (m_hwnd)
+                        PostMessageW(m_hwnd, WM_MATWINDOW_DRAW_DONE, 0, 0);
+                }
+                else {
+                    Sleep(10);
+                }
+            }
+            });
+
         while (GetMessageW(&msg, NULL, 0, 0)) {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
             idleTask();
         }
+
+        isDrawThreadRuning = false;
+        drawThread.join();
     }
 
     virtual void idleTask() {}
@@ -191,14 +212,29 @@ protected:
             m_hwnd = nullptr;
             PostQuitMessage(0);
             return 0;
+
+        case WM_MATWINDOW_DRAW_REQUEST:
+            isNeedRefreshUI = true;
+            return 0;
+
+        case WM_MATWINDOW_DRAW_DONE:
+            if (isDrawDone) {
+                isDrawDone = false;
+                invalidate();
+            }
+            return 0;
         }
 
         return DefWindowProcW(m_hwnd, msg, wParam, lParam);
     }
 
 public:
-    static inline volatile bool requestExitFlag = false;
-    static inline volatile bool isNeedRefreshUI = false;
+    static constexpr UINT WM_MATWINDOW_DRAW_REQUEST = WM_APP + 1;
+    static constexpr UINT WM_MATWINDOW_DRAW_DONE = WM_APP + 2;
+    volatile bool requestExitFlag = false;
+    volatile bool isNeedRefreshUI = true;
+    volatile bool isDrawThreadRuning = true;
+    volatile bool isDrawDone = false;
 
     virtual ~MatWindow() {
         m_hwnd = nullptr;
