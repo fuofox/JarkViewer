@@ -1,6 +1,6 @@
 #pragma once
 
-#include "jarkUtils.h"
+#include "MatWindow.h"
 #include "TextDrawer.h"
 
 // 全局变量存储UI状态
@@ -15,7 +15,6 @@ struct PrintParams {
     uint32_t colorMode = 1;         // 颜色模式 0:彩色  1:黑白  2:黑白文档 3:黑白抖动(二值像素)
     bool invertColors = false;      // 是否反相
 
-    bool isParamsChange = false;
     bool confirmed = false;       // 用户点击确认
     bool saveToFile = false;      // 保存到文件
     bool mousePressing = false;   // 鼠标左键是否按住状态
@@ -25,16 +24,16 @@ struct PrintParams {
 
 };
 
-class Printer {
+class Printer : public MatWindow {
 private:
-    static inline const char* windowsName = "PrintWindow";
+    static inline const wchar_t* windowsClassName = L"JarkPrinterWnd";
 
     PrintParams params{};
     TextDrawer textDrawer;
     cv::Mat printerRes, buttonPrint, buttonNormal, buttonInvert, trackbarBg;
+    cv::Mat m_inputBgrMat;  // 输入的图像
+    cv::Mat m_uiCanvas;     // UI 画布
     std::vector<cv::Mat> buttonColorMode;
-
-    static inline volatile bool requestExitFlag = false;
 
     void Init() {
         textDrawer.setSize(24);
@@ -102,7 +101,8 @@ public:
     ~Printer() { }
 
     static void requestExit() {
-        requestExitFlag = true;
+        if (hwnd)
+            PostMessageW(hwnd, WM_CLOSE, 0, 0);
     }
 
     // 灰度/BGR/BGRA统一到BGR
@@ -371,8 +371,149 @@ public:
         return dst;
     }
 
-    void refreshUI() {
+    void onPaint(HDC hdc) override {
+        if (!m_uiCanvas.empty())
+            blitMat(hdc, m_uiCanvas);
+    }
 
+    void onLButtonDown() override {
+        params.mousePressing = true;
+
+        int& x = m_x;
+        int& y = m_y;
+
+        if ((200 < x) && (x <= 800) && (50 < y) && (y < 100)) {
+            params.mousePressingBrightnessBar = true;
+            params.brightness = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
+            isNeedRefreshUI = true;
+        }
+        if ((200 < x) && (x <= 800) && (100 < y) && (y < 150)) {
+            params.mousePressingContrastBar = true;
+            params.contrast = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
+            isNeedRefreshUI = true;
+        }
+    }
+
+    void onLButtonUp() override {
+        params.mousePressing = false;
+        params.mousePressingBrightnessBar = false;
+        params.mousePressingContrastBar = false;
+
+        int& x = m_x;
+        int& y = m_y;
+
+        if ((0 < x) && (x < 100) && (y < 50)) { // 彩色
+            if (params.colorMode != 0) {
+                if (params.colorMode >= 2) { // 若之前是黑白文档/抖动模式，则恢复默认亮度对比度
+                    params.brightness = 100;
+                    params.contrast = 100;
+                }
+                params.colorMode = 0;
+                isNeedRefreshUI = true;
+            }
+        }
+
+        if ((100 < x) && (x < 200) && (y < 50)) { // 黑白
+            if (params.colorMode != 1) {
+                if (params.colorMode >= 2) { // 若之前是黑白文档/抖动模式，则恢复默认亮度对比度
+                    params.brightness = 100;
+                    params.contrast = 100;
+                }
+                params.colorMode = 1;
+                isNeedRefreshUI = true;
+            }
+        }
+
+        if ((200 < x) && (x < 300) && (y < 50)) { // 黑白文档
+            if (params.colorMode != 2) {
+                params.colorMode = 2;
+                params.brightness = 160;
+                params.contrast = 180;
+                isNeedRefreshUI = true;
+            }
+        }
+
+        if ((300 < x) && (x < 400) && (y < 50)) { // 黑白抖动
+            if (params.colorMode != 3) {
+                params.colorMode = 3;
+                params.brightness = 80;
+                params.contrast = 100;
+                isNeedRefreshUI = true;
+            }
+        }
+
+        if ((400 < x) && (x < 500) && (y < 50)) { // 正色
+            if (params.invertColors) {
+                params.invertColors = false;
+                isNeedRefreshUI = true;
+            }
+        }
+        if ((500 < x) && (x < 600) && (y < 50)) { // 反色
+            if (!params.invertColors) {
+                params.invertColors = true;
+                isNeedRefreshUI = true;
+            }
+        }
+        if ((600 < x) && (x < 700) && (y < 50)) { //另存为
+            params.saveToFile = true;
+        }
+        if ((700 < x) && (x < 800) && (y < 50)) { // 确定按钮
+            params.confirmed = true;
+            isNeedRefreshUI = true;
+            PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+        }
+    }
+
+    void onRButtonUp() override {
+        int& x = m_x;
+        int& y = m_y;
+
+        if (GlobalVar::settingParameter.rightClickAction == 1) {
+            PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+        }
+    }
+
+    void onMouseMove(WPARAM keyState) override {
+        int& x = m_x;
+        int& y = m_y;
+
+        if (params.mousePressing) {
+            if (params.mousePressingBrightnessBar) {
+                params.brightness = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
+                isNeedRefreshUI = true;
+            }
+            else if (params.mousePressingContrastBar) {
+                params.contrast = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
+                isNeedRefreshUI = true;
+            }
+        }
+    }
+
+    void onMouseWheel(int delta) override {
+        int& x = m_x;
+        int& y = m_y;
+
+        if ((100 < x) && (x < 800) && (50 < y) && (y < 100)) {
+            params.brightness += (delta > 0) ? 1 : -1;
+            isNeedRefreshUI = true;
+            if (params.brightness > INT_MAX) params.brightness = 0;
+            if (params.brightness > 200) params.brightness = 200;
+        }
+        else if ((100 < x) && (x < 800) && (100 < y) && (y < 150)) {
+            params.contrast += (delta > 0) ? 1 : -1;
+            isNeedRefreshUI = true;
+            if (params.contrast > INT_MAX) params.contrast = 0;
+            if (params.contrast > 200) params.contrast = 200;
+        }
+    }
+
+    void onKeyDown(WPARAM key) override {
+        if (key == VK_ESCAPE) {
+            PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+        }
+    }
+
+    void refreshUI() {
         cv::Mat adjusted = params.previewImage.clone();
         ApplyImageAdjustments(adjusted, params.brightness, params.contrast, params.colorMode, params.invertColors);
         cv::cvtColor(adjusted, adjusted, cv::COLOR_BGR2BGRA);
@@ -405,143 +546,43 @@ public:
         drawProgressBar(squareMat, { 250, 60, 500, 30 }, params.brightness / 200.0);
         drawProgressBar(squareMat, { 250, 110, 500, 30 }, params.contrast / 200.0);
 
-        cv::imshow(windowsName, squareMat);
+        m_uiCanvas = squareMat;
+
+        invalidate();
     }
 
+    void idleTask() override {
+        if (isNeedRefreshUI) {
+            isNeedRefreshUI = false;
+            refreshUI();
+        }
 
-    static void mouseCallback(int event, int _x, int _y, int flags, void* userdata) {
-        static int x = 0, y = 0;
-        PrintParams* params = static_cast<PrintParams*>(userdata);
+        if (params.saveToFile) {
+            params.saveToFile = false;
 
-        switch (event) {
+            std::thread saveImageThread([](cv::Mat image, PrintParams* params) {
+                auto [filePath, isJPG] = jarkUtils::saveImageDialogW(getUIStringW(23));
+                if (filePath.empty())
+                    return;
 
-        case cv::EVENT_RBUTTONUP: { // 右键
-            if (GlobalVar::settingParameter.rightClickAction == 1) {
-                requestExit();
-                return;
-            }
-        }break;
+                ApplyImageAdjustments(image, params->brightness, params->contrast, params->colorMode, params->invertColors);
 
-        case cv::EVENT_MOUSEWHEEL: { // 此事件的y坐标异常
-            auto wheelValue = cv::getMouseWheelDelta(flags);
-
-            if ((100 < x) && (x < 800) && (50 < y) && (y < 100)) {
-                params->brightness += (wheelValue > 0) ? 1 : -1;
-                params->isParamsChange = true;
-                if (params->brightness > INT_MAX)params->brightness = 0;
-                if (params->brightness > 200)params->brightness = 200;
-            }
-            else if ((100 < x) && (x < 800) && (100 < y) && (y < 150)) {
-                params->contrast += (wheelValue > 0) ? 1 : -1;
-                params->isParamsChange = true;
-                if (params->contrast > INT_MAX)params->contrast = 0;
-                if (params->contrast > 200)params->contrast = 200;
-            }
-        }break;
-
-        case cv::EVENT_MOUSEMOVE: {
-            x = _x;
-            y = _y;
-
-            if (params->mousePressing) {
-                if (params->mousePressingBrightnessBar) {
-                    params->brightness = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
-                    params->isParamsChange = true;
-                }
-                else if (params->mousePressingContrastBar) {
-                    params->contrast = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
-                    params->isParamsChange = true;
-                }
-            }
-        }break;
-
-        case cv::EVENT_LBUTTONDOWN: {
-            params->mousePressing = true;
-
-            if ((200 < x) && (x <= 800) && (50 < y) && (y < 100)) {
-                params->mousePressingBrightnessBar = true;
-                params->brightness = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
-                params->isParamsChange = true;
-            }
-            if ((200 < x) && (x <= 800) && (100 < y) && (y < 150)) {
-                params->mousePressingContrastBar = true;
-                params->contrast = x < 250 ? 0 : (x > 750 ? 200 : ((x - 250) * 200 / 500));
-                params->isParamsChange = true;
-            }
-        }break;
-
-        case cv::EVENT_LBUTTONUP: {
-            params->mousePressing = false;
-            params->mousePressingBrightnessBar = false;
-            params->mousePressingContrastBar = false;
-
-            if ((0 < x) && (x < 100) && (y < 50)) { // 彩色
-                if (params->colorMode != 0) {
-                    if (params->colorMode >= 2) { // 若之前是黑白文档/抖动模式，则恢复默认亮度对比度
-                        params->brightness = 100;
-                        params->contrast = 100;
+                std::vector<uchar> buffer;
+                if (cv::imencode(isJPG ? ".jpg" : ".png", image, buffer)) {
+                    std::ofstream file(filePath, std::ios::binary);
+                    if (file.is_open()) {
+                        file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+                        file.close();
                     }
-                    params->colorMode = 0;
-                    params->isParamsChange = true;
                 }
-            }
-
-            if ((100 < x) && (x < 200) && (y < 50)) { // 黑白
-                if (params->colorMode != 1) {
-                    if (params->colorMode >= 2) { // 若之前是黑白文档/抖动模式，则恢复默认亮度对比度
-                        params->brightness = 100;
-                        params->contrast = 100;
-                    }
-                    params->colorMode = 1;
-                    params->isParamsChange = true;
-                }
-            }
-
-            if ((200 < x) && (x < 300) && (y < 50)) { // 黑白文档
-                if (params->colorMode != 2) {
-                    params->colorMode = 2;
-                    params->brightness = 160;
-                    params->contrast = 180;
-                    params->isParamsChange = true;
-                }
-            }
-
-            if ((300 < x) && (x < 400) && (y < 50)) { // 黑白抖动
-                if (params->colorMode != 3) {
-                    params->colorMode = 3;
-                    params->brightness = 80;
-                    params->contrast = 100;
-                    params->isParamsChange = true;
-                }
-            }
-
-            if ((400 < x) && (x < 500) && (y < 50)) { // 正色
-                if (params->invertColors) {
-                    params->invertColors = false;
-                    params->isParamsChange = true;
-                }
-            }
-            if ((500 < x) && (x < 600) && (y < 50)) { // 反色
-                if (!params->invertColors) {
-                    params->invertColors = true;
-                    params->isParamsChange = true;
-                }
-            }
-            if ((600 < x) && (x < 700) && (y < 50)) { //另存为
-                params->saveToFile = true;
-            }
-            if ((700 < x) && (x < 800) && (y < 50)) { // 确定按钮
-                params->confirmed = true;
-                params->isParamsChange = true;
-                requestExit();
-            }
-        }break;
+                }, m_inputBgrMat.clone(), &params);
+            saveImageThread.detach();
         }
     }
 
     // 打印前预处理
-    bool ImagePreprocessingForPrint(const cv::Mat& image) {
-        if (image.empty() || image.type() != CV_8UC3) {
+    bool ImagePreprocessingForPrint() {
+        if (m_inputBgrMat.empty() || m_inputBgrMat.type() != CV_8UC3) {
             return false;
         }
 
@@ -549,8 +590,8 @@ public:
         const int previewWidth = 800;
         const int previewHeight = 950;
 
-        double scale = (double)previewWidth / std::max(image.rows, image.cols);
-        cv::resize(image, params.previewImage, cv::Size(), scale, scale);
+        double scale = (double)previewWidth / std::max(m_inputBgrMat.rows, m_inputBgrMat.cols);
+        cv::resize(m_inputBgrMat, params.previewImage, cv::Size(), scale, scale);
 
         // 若长宽差距很极端，超长或超宽，缩放可能异常
         if (params.previewImage.empty() || params.previewImage.rows <= 0 || params.previewImage.cols <= 0) {
@@ -558,65 +599,14 @@ public:
         }
 
         // 创建UI窗口
-        cv::namedWindow(windowsName, cv::WINDOW_AUTOSIZE);
-        cv::resizeWindow(windowsName, previewWidth, previewHeight);
+        if (!createWindow(previewWidth, previewHeight, windowsClassName, getUIStringW(40)))
+            return false;
 
-        cv::setMouseCallback(windowsName, mouseCallback, &params);
+        hwnd = m_hwnd;
 
         // 初始预览
         refreshUI();
-
-        hwnd = FindWindowA(NULL, windowsName);
-        if (hwnd) {
-            jarkUtils::disableWindowResize(hwnd);
-            SetWindowTextW(hwnd, getUIStringW(40));
-
-            HICON hIcon = LoadIconW(GetModuleHandleW(NULL), MAKEINTRESOURCE(IDI_JARKVIEWER));
-            if (hIcon) {
-                SendMessageW(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-                SendMessageW(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-            }
-            BOOL themeMode = GlobalVar::isCurrentUIDarkMode;
-            DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &themeMode, sizeof(BOOL));
-        }
-
-        // 事件循环
-        while (cv::getWindowProperty(windowsName, cv::WND_PROP_VISIBLE) > 0) {
-            if (params.isParamsChange) {
-                params.isParamsChange = false;
-                refreshUI();
-            }
-
-            if (cv::waitKey(10) == 27) // ESC
-                requestExit();
-            if (requestExitFlag || params.confirmed) {
-                cv::destroyWindow(windowsName);
-                break;
-            }
-
-            // 保存到文件
-            if (params.saveToFile) {
-                params.saveToFile = false;
-
-                std::thread saveImageThread([](cv::Mat image, PrintParams* params) {
-                    auto [filePath, isJPG] = jarkUtils::saveImageDialogW(getUIStringW(23));
-                    if (filePath.empty())
-                        return;
-
-                    ApplyImageAdjustments(image, params->brightness, params->contrast, params->colorMode, params->invertColors);
-
-                    std::vector<uchar> buffer;
-                    if (cv::imencode(isJPG ? ".jpg" : ".png", image, buffer)) {
-                        std::ofstream file(filePath, std::ios::binary);
-                        if (file.is_open()) {
-                            file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
-                            file.close();
-                        }
-                    }
-                    }, image.clone(), &params);
-                saveImageThread.detach();
-            }
-        }
+        runMessageLoop();
 
         // 用户是否确定打印
         return params.confirmed;
@@ -625,19 +615,19 @@ public:
 
     // 打印图像函数
     void PrintMatImage(const cv::Mat& image) {
-        auto bgrMat = matToBGR(image);
+        m_inputBgrMat = matToBGR(image);
 
-        if (bgrMat.empty()) {
+        if (m_inputBgrMat.empty()) {
             MessageBoxW(nullptr, L"图像转换到BGR发生错误", getUIStringW(14), MB_OK | MB_ICONERROR);
             return;
         }
 
-        if (!jarkUtils::limitSizeTo16K(bgrMat)) {
+        if (!jarkUtils::limitSizeTo16K(m_inputBgrMat)) {
             MessageBoxW(nullptr, L"调整图像尺寸发生错误", getUIStringW(14), MB_OK | MB_ICONERROR);
             return;
         }
 
-        auto confirmFlag = ImagePreprocessingForPrint(bgrMat);
+        auto confirmFlag = ImagePreprocessingForPrint();
 
         if (!confirmFlag) { // 取消打印
             return;
@@ -681,19 +671,18 @@ public:
         int pageHeight = GetDeviceCaps(pd.hDC, VERTRES);
 
         // 0.9 留5%边距
-        double scale = 0.9 * std::min(static_cast<double>(pageWidth) / bgrMat.cols,
-            static_cast<double>(pageHeight) / bgrMat.rows);
-        int newWidth = static_cast<int>(std::round(bgrMat.cols * scale));
-        int newHeight = static_cast<int>(std::round(bgrMat.rows * scale));
+        double scale = 0.9 * std::min(static_cast<double>(pageWidth) / m_inputBgrMat.cols,
+            static_cast<double>(pageHeight) / m_inputBgrMat.rows);
+        int newWidth = static_cast<int>(std::round(m_inputBgrMat.cols * scale));
+        int newHeight = static_cast<int>(std::round(m_inputBgrMat.rows * scale));
 
         // 缩放图像
         cv::Mat resized;
-        cv::resize(bgrMat, resized, cv::Size(newWidth, newHeight), 0, 0);
-
+        cv::resize(m_inputBgrMat, resized, cv::Size(newWidth, newHeight), 0, 0);
         // 使用之前调整的参数处理图像
         ApplyImageAdjustments(resized, params.brightness, params.contrast, params.colorMode, params.invertColors);
 
-        cv::Mat output(pageHeight, pageWidth, bgrMat.type(), cv::Scalar(255, 255, 255));
+        cv::Mat output(pageHeight, pageWidth, m_inputBgrMat.type(), cv::Scalar(255, 255, 255));
         int offsetX = (pageWidth - newWidth + 1) / 2;  // +1确保偶数差时居中
         int offsetY = (pageHeight - newHeight + 1) / 2;
 

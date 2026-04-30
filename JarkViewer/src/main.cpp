@@ -1646,8 +1646,6 @@ public:
                 jarkUtils::activateWindow(Printer::hwnd);
             }
             else {
-                Setting::requestExit(); // OpenCV窗口暂时不能同时共存
-
                 cv::Mat srcImg;
                 if (curPar.imageAssetPtr->format == ImageFormat::None || curPar.imageAssetPtr->format == ImageFormat::Still)
                     srcImg = curPar.imageAssetPtr->primaryFrame;
@@ -1686,7 +1684,6 @@ public:
                 jarkUtils::activateWindow(Setting::hwnd);
             }
             else {
-                Printer::requestExit(); // OpenCV窗口暂时不能同时共存
                 std::thread settingThread([](int tabIdx) {
                     Setting setting(tabIdx);
                     }, operateAction.value1);

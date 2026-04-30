@@ -1,6 +1,6 @@
 #pragma once
 
-#include "jarkUtils.h"
+#include "MatWindow.h"
 #include "TextDrawer.h"
 #include "FileAssociationManager.h"
 
@@ -29,7 +29,7 @@ struct generalTabRadio {
     uint32_t* valuePtr = nullptr;
 };
 
-class Setting {
+class Setting : public MatWindow {
 private:
     static const int winWidth = 1000;
     static const int winHeight = 700; // 固定UI尺寸适应任意分辨率和DPI，最大700为了照顾1366*768的屏幕
@@ -43,8 +43,7 @@ private:
     static inline const cv::Rect baiduBtnRect{ 440, 380, 520, 116 };
     static inline const cv::Rect lanzouBtnRect{ 440, 510, 520, 90 };
 
-    static inline const char* windowsName = "SettingsWindow";
-    static inline volatile bool requestExitFlag = false;
+    static inline const wchar_t* windowsClassName = L"JarkSettingWnd";
 
     static inline std::vector<string> allSupportExt;
     static inline std::set<string> checkedExt;
@@ -113,7 +112,6 @@ public:
     static inline volatile HWND hwnd = nullptr;
     static inline volatile int curTabIdx = 0; // 0:常规  1:文件关联  2:帮助  3:关于
     static inline volatile bool isWorking = false;
-    static inline volatile bool isNeedRefreshUI = false;
 
     Setting(int tabIdx = 0) {
         requestExitFlag = false;
@@ -130,7 +128,8 @@ public:
     ~Setting() {}
 
     static void requestExit() {
-        requestExitFlag = true;
+        if (hwnd)
+            PostMessageW(hwnd, WM_CLOSE, 0, 0);
     }
 
     void refreshGeneralTab() {
@@ -248,6 +247,56 @@ public:
 #endif
     }
 
+    void onPaint(HDC hdc) override {
+        if (!winCanvas.empty())
+            blitMat(hdc, winCanvas);
+    }
+
+    void onLButtonUp() override {
+        int& x = m_x;
+        int& y = m_y;
+
+        // 标签栏点击
+        if (y < 50) {
+            int newTabIdx = x / tabWidth;
+            if (newTabIdx <= 3 && newTabIdx != curTabIdx) {
+                switch (curTabIdx) {
+                case 0: finishGeneralTab(); break;
+                case 1: finishAssociateTab(); break;
+                }
+                curTabIdx = newTabIdx;
+                isNeedRefreshUI = true;
+            }
+            return;
+        }
+
+        // 各 Tab 点击处理
+        switch (curTabIdx) {
+        case 0: handleGeneralTab(cv::EVENT_LBUTTONUP, x, y, 0); break;
+        case 1: handleAssociateTab(cv::EVENT_LBUTTONUP, x, y, 0); break;
+        case 3: handleAboutTab(cv::EVENT_LBUTTONUP, x, y, 0); break;
+        }
+    }
+
+    void onRButtonUp() override {
+        int& x = m_x;
+        int& y = m_y;
+
+        if (GlobalVar::settingParameter.rightClickAction == 1) {
+            PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+        }
+    }
+
+    void onKeyDown(WPARAM key) override {
+        if (key == VK_ESCAPE) {
+            PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+        }
+        else if (key == VK_TAB) {
+            curTabIdx = (curTabIdx + 1) % 4;
+            isNeedRefreshUI = true;
+        }
+    }
+
     void refreshUI() {
         // 绘制标签栏
         cv::rectangle(winCanvas, { 0, 0, winWidth, tabHeight }, jarkUtils::to_cv_scalar(GlobalVar::currentTheme.BG_TAG), -1);
@@ -263,8 +312,8 @@ public:
         case 2:refreshHelpTab(); break;
         default:refreshAboutTab(); break;
         }
-
-        cv::imshow(windowsName, winCanvas);
+        
+        invalidate();
     }
 
     static void handleGeneralTab(int event, int x, int y, int flags) {
@@ -299,6 +348,13 @@ public:
 
     static void finishGeneralTab() {
 
+    }
+
+    static void updateWindowAttribute() {
+        if (hwnd) {
+            BOOL themeMode = GlobalVar::isCurrentUIDarkMode;
+            DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &themeMode, sizeof(BOOL));
+        }
     }
 
     static int getGridIndex(int x, int y, int xOffset = 50, int yOffset = 200,
@@ -437,88 +493,22 @@ public:
         }
     }
 
-    static void mouseCallback(int event, int x, int y, int flags, void* userData) {
-        if (event == cv::EVENT_LBUTTONUP && y < 50) {
-            int newTabIdx = x / tabWidth;
-            if (newTabIdx <= 3 && newTabIdx != curTabIdx) {
-                isNeedRefreshUI = true;
-                switch (curTabIdx) {
-                case 0: finishGeneralTab(); break;
-                case 1: finishAssociateTab(); break;
-                }
-                curTabIdx = newTabIdx;
-            }
+    void idleTask() override {
+        if (isNeedRefreshUI) {
+            isNeedRefreshUI = false;
+            refreshUI();
         }
-
-        if (event == cv::EVENT_RBUTTONUP) { // 右键
-            if (GlobalVar::settingParameter.rightClickAction == 1) {
-                requestExit();
-                return;
-            }
-        }
-
-        switch (curTabIdx) {
-        case 0:handleGeneralTab(event, x, y, flags); break;
-        case 1:handleAssociateTab(event, x, y, flags); break;
-        case 3:handleAboutTab(event, x, y, flags); break;
-        }
-    }
-
-    static void updateWindowAttribute() {
-        BOOL themeMode = GlobalVar::isCurrentUIDarkMode;
-        DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &themeMode, sizeof(BOOL));
     }
 
     void windowsMainLoop() {
-        cv::namedWindow(windowsName, cv::WINDOW_AUTOSIZE);
-        cv::resizeWindow(windowsName, winWidth, winHeight);
-        cv::setMouseCallback(windowsName, mouseCallback, nullptr);
-
-        refreshUI();
-
-        hwnd = FindWindowA(NULL, windowsName);
-        if (hwnd) {
-            jarkUtils::disableWindowResize(hwnd);
-            SetWindowTextW(hwnd, getUIStringW(39));
-
-            HICON hIcon = LoadIconW(GetModuleHandleW(NULL), MAKEINTRESOURCE(IDI_JARKVIEWER));
-            if (hIcon) {
-                SendMessageW(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-                SendMessageW(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-            }
-            updateWindowAttribute();
-        }
-        else {
+        if (!createWindow(winWidth, winHeight, windowsClassName, getUIStringW(39)))
             return;
-        }
 
-        while (cv::getWindowProperty(windowsName, cv::WND_PROP_VISIBLE) > 0) {
-            if (isNeedRefreshUI) {
-                isNeedRefreshUI = false;
-                refreshUI();
-            }
+        hwnd = m_hwnd;
+        refreshUI();
+        runMessageLoop();
 
-            auto keyValue = cv::waitKey(10);
-            if (keyValue > 0) {
-                switch (keyValue) {
-                case VK_ESCAPE: // ESC
-                    requestExit();
-                    break;
-                case VK_TAB:
-                    curTabIdx = (curTabIdx + 1) % 4;
-                    isNeedRefreshUI = true;
-                    break;
-                default:
-                    JARK_LOG("keyValue: {}", keyValue);
-                    break;
-                }
-            }
-            if (requestExitFlag) {
-                cv::destroyWindow(windowsName);
-                break;
-            }
-        }
-
+        // 退出时保存当前 Tab 状态
         switch (curTabIdx) {
         case 0: finishGeneralTab(); break;
         case 1: finishAssociateTab(); break;
