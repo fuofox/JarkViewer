@@ -9,7 +9,7 @@
 
 [中文](README.md) | English
 
-*A lightweight and lightning-fast image viewer that supports a vast array of image formats — from JPEG to the latest ones such as AVIF, HEIC, and JPEG XL! It even smoothly displays iOS Live Photos and Android Motion Photos.*
+*A minimalist and lightning-fast image viewer that supports a vast array of image formats — from JPEG to the latest ones such as AVIF, HEIC, and JPEG XL! It even smoothly displays iOS Live Photos and Android Motion Photos.*
 
 ![Preview](preview.png)
 

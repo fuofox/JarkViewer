@@ -9,7 +9,7 @@
 
 中文 | [English](README_EN.md)
 
-*一款轻量且飞快的看图软件，支持从 JPEG 到 AVIF、HEIC 和 JPEG XL 等最新格式的超多图像格式！即使是 iOS 和 Android 的实况照片也能流畅浏览。*
+*一款简约且飞快的看图软件，支持从 JPEG 到 AVIF、HEIC 和 JPEG XL 等最新格式的超多图像格式！即使是 iOS 和 Android 的实况照片也能流畅浏览。*
 
 ![Preview](preview.png)
 
