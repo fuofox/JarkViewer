@@ -49,13 +49,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>$(ProjectDir)libjxl;$(ProjectDir)libavif;$(ProjectDir)libwebp2;$(ProjectDir)libpng;$(ProjectDir)libexiv2;$(ProjectDir)libopencv;$(ProjectDir)ffmpeg;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)ffmpeg;$(ProjectDir)include/libwebp2;$(ProjectDir)include;$(ProjectDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)libjxl;$(ProjectDir)libavif;$(ProjectDir)libwebp2;$(ProjectDir)libpng;$(ProjectDir)libexiv2;$(ProjectDir)libopencv;$(ProjectDir)libffmpeg;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)include/ffmpeg;$(ProjectDir)include/libwebp2;$(ProjectDir)include;$(ProjectDir);$(IncludePath)</IncludePath>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>$(ProjectDir)libjxl;$(ProjectDir)libavif;$(ProjectDir)libwebp2;$(ProjectDir)libpng;$(ProjectDir)libexiv2;$(ProjectDir)libopencv;$(ProjectDir)ffmpeg;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)ffmpeg;$(ProjectDir)include/libwebp2;$(ProjectDir)include;$(ProjectDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)libjxl;$(ProjectDir)libavif;$(ProjectDir)libwebp2;$(ProjectDir)libpng;$(ProjectDir)libexiv2;$(ProjectDir)libopencv;$(ProjectDir)libffmpeg;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)include/ffmpeg;$(ProjectDir)include/libwebp2;$(ProjectDir)include;$(ProjectDir);$(IncludePath)</IncludePath>
     <LinkIncremental>false</LinkIncremental>
     <CopyCppRuntimeToOutputDir>false</CopyCppRuntimeToOutputDir>
   </PropertyGroup>
@@ -156,101 +156,24 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\avif\avif.h" />
     <ClInclude Include="include\blpDecoder.h" />
     <ClInclude Include="include\D3D11App.h" />
     <ClInclude Include="include\exifParse.h" />
     <ClInclude Include="include\FileAssociationNaming.h" />
     <ClInclude Include="include\FileAssociationManager.h" />
     <ClInclude Include="include\ImageDatabase.h" />
-    <ClInclude Include="include\libheif\heif.h" />
-    <ClInclude Include="include\libheif\heif_cxx.h" />
-    <ClInclude Include="include\libheif\heif_items.h" />
-    <ClInclude Include="include\libheif\heif_plugin.h" />
-    <ClInclude Include="include\libheif\heif_properties.h" />
-    <ClInclude Include="include\libheif\heif_regions.h" />
-    <ClInclude Include="include\libheif\heif_version.h" />
-    <ClInclude Include="include\libraw\libraw.h" />
     <ClInclude Include="include\LRU.h" />
-    <ClInclude Include="include\lunasvg.h" />
     <ClInclude Include="include\Printer.h" />
-    <ClInclude Include="include\psdsdk.h" />
-    <ClInclude Include="include\psdsdk\Psd.h" />
-    <ClInclude Include="include\psdsdk\PsdAllocator.h" />
-    <ClInclude Include="include\psdsdk\PsdAlphaChannel.h" />
-    <ClInclude Include="include\psdsdk\PsdAssert.h" />
-    <ClInclude Include="include\psdsdk\PsdBitUtil.h" />
-    <ClInclude Include="include\psdsdk\PsdBlendMode.h" />
-    <ClInclude Include="include\psdsdk\PsdChannel.h" />
-    <ClInclude Include="include\psdsdk\PsdChannelType.h" />
-    <ClInclude Include="include\psdsdk\PsdColorMode.h" />
-    <ClInclude Include="include\psdsdk\PsdColorModeDataSection.h" />
-    <ClInclude Include="include\psdsdk\PsdCompilerMacros.h" />
-    <ClInclude Include="include\psdsdk\PsdCompressionType.h" />
-    <ClInclude Include="include\psdsdk\PsdDecompressRle.h" />
-    <ClInclude Include="include\psdsdk\PsdDocument.h" />
-    <ClInclude Include="include\psdsdk\PsdDocumentation.h" />
-    <ClInclude Include="include\psdsdk\PsdEndianConversion.h" />
-    <ClInclude Include="include\psdsdk\PsdExport.h" />
-    <ClInclude Include="include\psdsdk\PsdExportChannel.h" />
-    <ClInclude Include="include\psdsdk\PsdExportColorMode.h" />
-    <ClInclude Include="include\psdsdk\PsdExportDocument.h" />
-    <ClInclude Include="include\psdsdk\PsdExportLayer.h" />
-    <ClInclude Include="include\psdsdk\PsdExportMetaDataAttribute.h" />
-    <ClInclude Include="include\psdsdk\PsdFile.h" />
-    <ClInclude Include="include\psdsdk\PsdFixedSizeString.h" />
-    <ClInclude Include="include\psdsdk\PsdImageDataSection.h" />
-    <ClInclude Include="include\psdsdk\PsdImageResourcesSection.h" />
-    <ClInclude Include="include\psdsdk\PsdImageResourceType.h" />
-    <ClInclude Include="include\psdsdk\PsdInterleave.h" />
-    <ClInclude Include="include\psdsdk\Psdinttypes.h" />
-    <ClInclude Include="include\psdsdk\Psdispod.h" />
-    <ClInclude Include="include\psdsdk\Psdisunsigned.h" />
-    <ClInclude Include="include\psdsdk\PsdKey.h" />
-    <ClInclude Include="include\psdsdk\PsdLayer.h" />
-    <ClInclude Include="include\psdsdk\PsdLayerCanvasCopy.h" />
-    <ClInclude Include="include\psdsdk\PsdLayerMask.h" />
-    <ClInclude Include="include\psdsdk\PsdLayerMaskSection.h" />
-    <ClInclude Include="include\psdsdk\PsdLayerType.h" />
-    <ClInclude Include="include\psdsdk\PsdLog.h" />
-    <ClInclude Include="include\psdsdk\PsdMallocAllocator.h" />
-    <ClInclude Include="include\psdsdk\PsdMemoryUtil.h" />
-    <ClInclude Include="include\psdsdk\Psdminiz.h" />
-    <ClInclude Include="include\psdsdk\PsdNamespace.h" />
-    <ClInclude Include="include\psdsdk\PsdNativeFile.h" />
-    <ClInclude Include="include\psdsdk\PsdNativeFile_Linux.h" />
-    <ClInclude Include="include\psdsdk\PsdNativeFile_Mac.h" />
-    <ClInclude Include="include\psdsdk\PsdParseColorModeDataSection.h" />
-    <ClInclude Include="include\psdsdk\PsdParseDocument.h" />
-    <ClInclude Include="include\psdsdk\PsdParseImageDataSection.h" />
-    <ClInclude Include="include\psdsdk\PsdParseImageResourcesSection.h" />
-    <ClInclude Include="include\psdsdk\PsdParseLayerMaskSection.h" />
-    <ClInclude Include="include\psdsdk\PsdPch.h" />
-    <ClInclude Include="include\psdsdk\PsdPlanarImage.h" />
-    <ClInclude Include="include\psdsdk\PsdPlatform.h" />
-    <ClInclude Include="include\psdsdk\PsdSection.h" />
-    <ClInclude Include="include\psdsdk\Psdstdint.h" />
-    <ClInclude Include="include\psdsdk\PsdStringUtil.h" />
-    <ClInclude Include="include\psdsdk\PsdSyncFileReader.h" />
-    <ClInclude Include="include\psdsdk\PsdSyncFileUtil.h" />
-    <ClInclude Include="include\psdsdk\PsdSyncFileWriter.h" />
-    <ClInclude Include="include\psdsdk\PsdThumbnail.h" />
-    <ClInclude Include="include\psdsdk\PsdTypes.h" />
-    <ClInclude Include="include\psdsdk\PsdUnionCast.h" />
-    <ClInclude Include="include\psdsdk\PsdVectorMask.h" />
     <ClInclude Include="include\Setting.h" />
     <ClInclude Include="include\stringRes.h" />
     <ClInclude Include="include\SVGPreprocessor.h" />
     <ClInclude Include="include\TextDrawer.h" />
-    <ClInclude Include="include\thread_pool.h" />
     <ClInclude Include="include\jarkUtils.h" />
     <ClInclude Include="include\tinyxml2.h" />
-    <ClInclude Include="include\x265.h" />
-    <ClInclude Include="include\x265_config.h" />
+    <ClInclude Include="include\videoDecoder.h" />
     <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\videoDecoder.h" />
     <ClCompile Include="src\blpDecoder.cpp" />
     <ClCompile Include="src\D3D11App.cpp" />
     <ClCompile Include="src\exifParse.cpp" />
@@ -276,9 +199,6 @@
   </ItemGroup>
   <ItemGroup>
     <Font Include="file\MSYHMONO.ttf" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

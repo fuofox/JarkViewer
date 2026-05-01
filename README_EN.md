@@ -49,7 +49,7 @@ You can also select color modes: `Color`, `Gray`, `Document`, `Dithering`.
 
 ## 📂 Format Support
 
--   **Static**: `apng avif avifs bmp dib exr gif hdr heic heif ico icon jfif jp2 jpe jpeg jpg jxl jxr livp pbm pfm pgm pic png pnm ppm psd pxm qoi ras sr svg tga tif tiff webp wp2`
+-   **Static**: `apng avif avifs blp bmp dib exr gif hdr heic heif ico icon jfif jp2 jpe jpeg jpg jxl jxr livp pbm pfm pgm pic png pnm ppm psd pxm qoi ras sr svg tga tif tiff webp wp2`
 -   **Animated**: `gif webp png apng jxl avif`
 -   **Live**: `livp (IOS LivePhoto) jpg/heic/heif (Android MicroVideo/MotionPhoto)` *⚠ Audio not supported yet*
 -   **RAW**: `3fr ari arw bay cap cr2 cr3 crw dcr dcs dng drf eip erf fff gpr iiq k25 kdc mdc mef mos mrw nef nrw orf pef ptx r3d raf raw rw2 rwl rwz sr2 srf srw x3f`
@@ -81,7 +81,7 @@ Only `64-bit` `Windows 10/11` are supported.
 
 When cloning the repository source code, only the latest commit is necessary as historical commits contain many space-consuming redundant files.
 ```sh
-git clone git@github.com:jark006/JarkViewer.git --depth=1
+git clone git@github.com:jark006/JarkViewer.git --depth=50
 ```
 
 **⭐️ It is recommended to visit the [DeepWiki](https://deepwiki.com/jark006/JarkViewer) page of this project, which has more detailed explanations and development-related content, and can help you quickly understand the implementation logic of each module.**

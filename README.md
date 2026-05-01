@@ -49,7 +49,7 @@
 
 ## 📂 格式支持
 
-- **静态**：`apng avif avifs bmp dib exr gif hdr heic heif ico icon jfif jp2 jpe jpeg jpg jxl jxr livp pbm pfm pgm pic png pnm ppm psd pxm qoi ras sr svg tga tif tiff webp wp2`
+- **静态**：`apng avif avifs blp bmp dib exr gif hdr heic heif ico icon jfif jp2 jpe jpeg jpg jxl jxr livp pbm pfm pgm pic png pnm ppm psd pxm qoi ras sr svg tga tif tiff webp wp2`
 - **动态**：`gif webp png apng jxl avif`
 - **实况**：`livp(IOS LivePhoto) jpg/heic/heif(Android MicroVideo/MotionPhoto)` *⚠ 暂不支持播放声音*
 - **RAW**：`3fr ari arw bay cap cr2 cr3 crw dcr dcs dng drf eip erf fff gpr iiq k25 kdc mdc mef mos mrw nef nrw orf pef ptx r3d raf raw rw2 rwl rwz sr2 srf srw x3f`
@@ -81,7 +81,7 @@ scoop install extras/jarkviewer
 
 下载仓库源码时，只需下载最新提交，历史提交存在较多占空间的冗余文件。
 ```sh
-git clone git@github.com:jark006/JarkViewer.git --depth=1
+git clone git@github.com:jark006/JarkViewer.git --depth=50
 ```
 
 **⭐ 建议访问本项目的 [DeepWiki](https://deepwiki.com/jark006/JarkViewer) 页面，有更详细的说明和开发相关的内容，可快速理解各个模块的实现逻辑。**

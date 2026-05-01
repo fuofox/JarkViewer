@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="资源文件">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
@@ -13,11 +9,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="include_psd">
-      <UniqueIdentifier>{f24eae56-f8f6-4f02-b322-ed0a8ed84437}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="libheif">
-      <UniqueIdentifier>{ad933f3c-42ea-40f3-8b5f-ad21c636aa56}</UniqueIdentifier>
+    <Filter Include="resources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -27,245 +21,14 @@
     <ClInclude Include="include\LRU.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\x265.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\x265_config.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\avif\avif.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libraw\libraw.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\exifParse.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\ImageDatabase.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\thread_pool.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\Psd.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdAllocator.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdAlphaChannel.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdAssert.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdBitUtil.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdBlendMode.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdChannel.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdChannelType.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdColorMode.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdColorModeDataSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdCompilerMacros.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdCompressionType.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdDecompressRle.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdDocument.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdDocumentation.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdEndianConversion.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdExport.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdExportChannel.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdExportColorMode.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdExportDocument.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdExportLayer.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdExportMetaDataAttribute.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdFile.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdFixedSizeString.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdImageDataSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdImageResourcesSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdImageResourceType.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdInterleave.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\Psdinttypes.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\Psdispod.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\Psdisunsigned.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdKey.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdLayer.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdLayerCanvasCopy.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdLayerMask.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdLayerMaskSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdLayerType.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdLog.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdMallocAllocator.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdMemoryUtil.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\Psdminiz.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdNamespace.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdNativeFile.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdNativeFile_Linux.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdNativeFile_Mac.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdParseColorModeDataSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdParseDocument.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdParseImageDataSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdParseImageResourcesSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdParseLayerMaskSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdPch.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdPlanarImage.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdPlatform.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdSection.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\Psdstdint.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdStringUtil.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdSyncFileReader.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdSyncFileUtil.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdSyncFileWriter.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdThumbnail.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdTypes.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdUnionCast.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
-    <ClInclude Include="include\psdsdk\PsdVectorMask.h">
-      <Filter>include_psd</Filter>
-    </ClInclude>
     <ClInclude Include="include\D3D11App.h">
       <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\lunasvg.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libheif\heif.h">
-      <Filter>libheif</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libheif\heif_cxx.h">
-      <Filter>libheif</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libheif\heif_plugin.h">
-      <Filter>libheif</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libheif\heif_properties.h">
-      <Filter>libheif</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libheif\heif_regions.h">
-      <Filter>libheif</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libheif\heif_version.h">
-      <Filter>libheif</Filter>
-    </ClInclude>
-    <ClInclude Include="include\libheif\heif_items.h">
-      <Filter>libheif</Filter>
     </ClInclude>
     <ClInclude Include="include\printer.h">
       <Filter>include</Filter>
@@ -297,6 +60,9 @@
     <ClInclude Include="include\blpDecoder.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\videoDecoder.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -304,9 +70,6 @@
     </ClCompile>
     <ClCompile Include="src\D3D11App.cpp">
       <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="include\videoDecoder.h">
-      <Filter>include</Filter>
     </ClCompile>
     <ClCompile Include="src\exifParse.cpp">
       <Filter>src</Filter>
@@ -335,36 +98,35 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JarkViewer.rc">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </Image>
     <Image Include="JarkViewer.ico">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </Image>
     <Image Include="file\tips.png">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </Image>
     <Image Include="file\home.png">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </Image>
     <Image Include="file\settingRes.png">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </Image>
     <Image Include="file\mainRes.png">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </Image>
     <Image Include="file\printerRes.png">
-      <Filter>资源文件</Filter>
+      <Filter>resources</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Font Include="file\MSYHMONO.ttf" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
+    <Font Include="file\MSYHMONO.ttf">
+      <Filter>resources</Filter>
+    </Font>
   </ItemGroup>
 </Project>
